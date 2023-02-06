@@ -382,7 +382,8 @@ class CC1101:
 
         """ CC1101 SPI/26 Mhz synchronization bug - see CC1101 errata
             When reading the following registers two consecutive reads
-            must give the same result to be OK. """
+            must give the same result to be OK.
+        """
         if address in [CC1101.FREQEST, CC1101.MARCSTATE, CC1101.RXBYTES,
                        CC1101.TXBYTES, CC1101.WORTIME0, CC1101.WORTIME1]:
             value = read_buf[1]
@@ -432,7 +433,7 @@ class CC1101:
         self.spi.write(buf)
         self.deselect()
 
-    def receive_data(self, length):
+    def receive_data(self, _length):
         """ Read available bytes from the FIFO
 
         :param int length: max number of bytes to read
@@ -457,7 +458,7 @@ class CC1101:
         timeout = 500000 + (1.0/(self._br*1000.0))*(CC1101.CC1101_MAX_PACKET_LENGTH*400.0)
         
         # start reception
-        state = self.startReceive()
+        self.startReceive()
         # FIXME
         #RADIOLIB_ASSERT(state);
 
@@ -487,7 +488,7 @@ class CC1101:
         # check address filtering
         _filter = self.SPIgetRegValue(CC1101.PKTCTRL1, 1, 0)
         if (_filter != CC1101.CC1101_ADR_CHK_NONE):
-            read_register(CC1101.RXFIFO)
+            self.read_register(CC1101.RXFIFO)
         
 
         bytesInFIFO = self.SPIgetRegValue(CC1101.RXBYTES, 6, 0)
@@ -761,8 +762,8 @@ class CC1101:
             # PA_TABLE[0] is the power to be used when transmitting a 0  (no power)
             # PA_TABLE[1] is the power to be used when transmitting a 1  (full power)
 
-            paValues = [0x00, powerRaw]
             # FIXME
+            # paValues = [0x00, powerRaw]
             # SPIwriteRegisterBurst(RADIOLIB_CC1101_REG_PATABLE, paValues, 2);
             return CC1101.ERR_NONE
 
@@ -959,7 +960,7 @@ class CC1101:
             return self.SPIsetRegValue(CC1101.MDMCFG2, CC1101.CC1101_SYNC_MODE_15_16_THR if requireCarrierSense else CC1101.CC1101_SYNC_MODE_15_16, 2, 0)
         
         else:
-            return CC1101.RADIOLIB_ERR_INVALID_SYNC_WORD
+            return CC1101.INVALID_SYNC_WORD
 
     def disableSyncWordFiltering(self, requireCarrierSense):
         return self.SPIsetRegValue(CC1101.MDMCFG2, CC1101.CC1101_SYNC_MODE_NONE_THR if requireCarrierSense else CC1101.CC1101_SYNC_MODE_NONE, 2, 0)
