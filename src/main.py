@@ -17,7 +17,7 @@ def getMessage():
     #     3. wait for expected RX packet or timeout [~500us in this configuration]
     #     4. flush RX buffer
     #     5. switch to standby
-    (state, data) = cc1101.receive(27)
+    (rcvState, data) = cc1101.receive(27)
     #print("\nData:  ", data)
     #rssi  = cc1101.getRSSI()
     #print("RSSI:  ", rssi)
@@ -33,7 +33,7 @@ def getMessage():
     #    print("\n[{}]".format(' '.join(hex(x) for x in recvData)))
     
     recvData = data
-    if state == CC1101.ERR_NONE:
+    if rcvState == CC1101.ERR_NONE:
         # Verify last syncword is 1st byte of payload (see setSyncWord() above)
         if recvData[0] == 0xD4:
 
@@ -49,12 +49,12 @@ def getMessage():
                 #decode_res = decodeBresser5In1Payload(&recvData[1], sizeof(recvData) - 1);
                 pass
             
-    elif state == CC1101.ERR_RX_TIMEOUT:
+    elif rcvState == CC1101.ERR_RX_TIMEOUT:
         print("T", end='')
         
     else:
         # some other error occurred
-        print("\nReceive failed: [{:d}]".format(state))
+        print("\nReceive failed: [{:d}]".format(rcvState))
         
     return decode_res
 
