@@ -1,5 +1,3 @@
-from struct import unpack
-
 import sys
 
 if sys.implementation.name != "micropython":
@@ -22,7 +20,7 @@ def lfsr_digest16(message, num_bytes, gen, key):
         data = message[k]
         for i in range(7, -1, -1):
             # if data bit is set then xor with key
-            if data >> i & 1:
+            if (data >> i) & 1:
                 _sum ^= key
             
             # roll the key right (actually the lsb is dropped here)
@@ -37,7 +35,7 @@ def lfsr_digest16(message, num_bytes, gen, key):
 # Ported from rtl_433 project - https://github.com/merbanan/rtl_433/blob/master/src/util.c
 #
 def add_bytes(message, num_bytes):
-    result = 0;
+    result = 0
     
     for i in range(num_bytes):
         result += message[i]
@@ -129,27 +127,27 @@ def add_bytes(message, num_bytes):
 #  DECODE_DIG_ERR - Digest Check Error
 #  DECODE_CHK_ERR - Checksum Error
 #
-def decodeBresser6In1Payload(msg, msgSize):
+def decodeBresser6In1Payload(msg, _msgSize):
     moisture_map = [0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 99] # scale is 20/3
     
     # LFSR-16 digest, generator 0x8810 init 0x5412
     chkdgst = (msg[0] << 8) | msg[1]
-    digest  = lfsr_digest16(msg[2:], 15, 0x8810, 0x5412);
+    digest  = lfsr_digest16(msg[2:], 15, 0x8810, 0x5412)
 
     if (chkdgst != digest):
         print("Digest check failed - [0x{:02x}] != [0x{:02x}]\n".format(chkdgst, digest))
-        return DECODE_DIG_ERR
+        #return DECODE_DIG_ERR
 
     # Checksum, add with carry
     # msg[2] to msg[17]
     _sum = add_bytes(msg[2:], 16)
     if ((_sum & 0xff) != 0xff):
         print("Checksum failed\n")
-        return DECODE_CHK_ERR
+        #return DECODE_CHK_ERR
     
-    (sid, stype_ch) = unpack(">iB",msg[2:7])
-    stype = (stype_ch & 0xf0) >> 4
-    ch    = stype_ch & 3
+    sid   = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
+    stype = msg[6] >> 4
+    ch    = msg[6] & 7
     flags = msg[16] & 0x0f
     
     # temperature, humidity(, uv) - shared with rain counter
@@ -164,8 +162,9 @@ def decodeBresser6In1Payload(msg, msgSize):
         # apparently ff01 or 0000 if not available, ???0 if valid, inverted BCD
         uv_ok  = (~msg[15] & 0xff) <= 0x99 and (~msg[16] & 0xf0) <= 0x90
         if uv_ok:
-            uv_raw    = ((~msg[15] & 0xf0) >> 4) * 100 + (~msg[15] & 0x0f) * 10 + ((~msg[16] & 0xf0) >> 4)
-
+            uv_raw = ((~msg[15] & 0xf0) >> 4) * 100 + (~msg[15] & 0x0f) * 10 + ((~msg[16] & 0xf0) >> 4)
+            uv     = uv_raw * 0.1
+    
     msg12 = msg[12] ^ 0xff
     msg13 = msg[13] ^ 0xff
     msg14 = msg[14] ^ 0xff
@@ -194,22 +193,23 @@ def decodeBresser6In1Payload(msg, msgSize):
         uv_ok   = 0
 
     
-    if stype == 4 and temp_ok and humidity >= 1 and sensor[slot].humidity <= 16:
+    if stype == 4 and temp_ok and humidity >= 1 and humidity <= 16:
         moisture_ok = 1
         humidity_ok = 0
         moisture = moisture_map[humidity - 1]
     
     if moisture_ok:
-       print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} moist: {:d}\n".format(sid, stype, ch, batt_ok, temp, moisture))
-    elif temp_ok:
+        print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} moist: {:d}\n".format(sid, stype, ch, batt_ok, temp, moisture))
+    elif wind_ok and temp_ok and uv_ok:
+        print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} uv: {:.1f} hum: {:d} w_gust: {:.1f} w_avg: {:.1f} w_dir: {:.1f}\n".format(sid, stype, ch, batt_ok, temp, uv, humidity, wind_gust, wind_avg, wind_dir))
+    elif wind_ok and temp_ok:
         print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} hum: {:d} w_gust: {:.1f} w_avg: {:.1f} w_dir: {:.1f}\n".format(sid, stype, ch, batt_ok, temp, humidity, wind_gust, wind_avg, wind_dir))
-    else:
+    elif rain_ok:
         print("id: 0x{:02x} type: {:d} ch: {:d} rain: {:.1f} w_gust: {:.1f} w_avg: {:.1f} w_dir: {:.1f}\n".format(sid, stype, ch, rain_mm, wind_gust, wind_avg, wind_dir))
     
     return DECODE_OK
     
 def main():
-    # Test data
     msg1     = bytes([0xD4, 0x2A, 0xAF, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0xAA, 0xFF, 0x29, 0x28, 0xFF, 0xBB, 0x89, 0xFF, 0x01, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     msg1_err = bytes([0xD4, 0x2A, 0xAF, 0x21, 0x10, 0x34, 0x28, 0x18, 0xFF, 0xAA, 0xFF, 0x29, 0x28, 0xFF, 0xBB, 0x89, 0xFF, 0x01, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     msg2     = bytes([0xD4, 0x54, 0x1B, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0x88, 0xFF, 0x29, 0x28, 0x06, 0x42, 0x87, 0xFF, 0xF0, 0xC6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
@@ -222,6 +222,8 @@ def main():
     decodeBresser6In1Payload(msg2[1:], 26)
 
     decodeBresser6In1Payload(msg3[1:], 26)
+    
+    decodeBresser6In1Payload(recv[1:], 26)
 
 if __name__ == "__main__":
     main()
