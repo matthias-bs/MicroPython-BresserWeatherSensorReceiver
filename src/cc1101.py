@@ -380,10 +380,9 @@ class CC1101:
         self.spi_wait_miso()
         self.spi.write_readinto(write_buf, read_buf)
 
-        """ CC1101 SPI/26 Mhz synchronization bug - see CC1101 errata
-            When reading the following registers two consecutive reads
-            must give the same result to be OK.
-        """
+        # CC1101 SPI/26 Mhz synchronization bug - see CC1101 errata
+        # When reading the following registers two consecutive reads
+        # must give the same result to be OK.
         if address in [CC1101.FREQEST, CC1101.MARCSTATE, CC1101.RXBYTES,
                        CC1101.TXBYTES, CC1101.WORTIME0, CC1101.WORTIME1]:
             value = read_buf[1]
@@ -960,7 +959,7 @@ class CC1101:
             return self.SPIsetRegValue(CC1101.MDMCFG2, CC1101.CC1101_SYNC_MODE_15_16_THR if requireCarrierSense else CC1101.CC1101_SYNC_MODE_15_16, 2, 0)
         
         else:
-            return CC1101.INVALID_SYNC_WORD
+            return CC1101.ERR_INVALID_SYNC_WORD
 
     def disableSyncWordFiltering(self, requireCarrierSense):
         return self.SPIsetRegValue(CC1101.MDMCFG2, CC1101.CC1101_SYNC_MODE_NONE_THR if requireCarrierSense else CC1101.CC1101_SYNC_MODE_NONE, 2, 0)
