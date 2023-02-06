@@ -23,12 +23,16 @@ def getMessage():
     #print("RSSI:  ", rssi)
     recvData = []
     
-    if len(data) > 0:
-        recvData = [int.from_bytes(data[0][i:i+1], "little") for i in range(len(data[0]))]
+#    if len(data) > 0:
+#        recvData = [int.from_bytes(data[0][i:i+1], "little") for i in range(len(data[0]))]
+    #if len(data) > 0:
+    #    recvData = [int.from_bytes(data[0][i:i+1], "little") for i in range(len(data))]
     
     #print("recvData: ", recvData)
-    print("\n[{}]".format(' '.join(hex(x) for x in recvData)))
+    #if len(recvData) > 0:
+    #    print("\n[{}]".format(' '.join(hex(x) for x in recvData)))
     
+    recvData = data
     if state == CC1101.ERR_NONE:
         # Verify last syncword is 1st byte of payload (see setSyncWord() above)
         if recvData[0] == 0xD4:
@@ -123,9 +127,9 @@ if __name__ == "__main__":
     }
     
     for name, addr in regs.items():
-       print(name, hex(cc1101.read_register(addr)))
+        print(name, hex(cc1101.read_register(addr)))
     
     # Try to receive and decode sensor data
     while True:
         res = getMessage()
-        sleep_ms(100)
+        sleep_ms(10)
