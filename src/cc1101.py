@@ -1,17 +1,16 @@
-# MicroPython CC1101 driver 
+# MicroPython CC1101 driver
 #
-# based on ITHO CVU controller in MicroPython
-# (https://github.com/erikdelange/ITHO-CVU-controller-in-MicroPython)
-# by Erik de Lange
-# 
-# with additions from RadioLib
-# https://github.com/jgromes/RadioLib
-# by Jan Gromeš 
+# Inspired by the CC1101 drivers written in C from:
+# https://github.com/letscontrolit/ESPEasyPluginPlayground/
+# https://github.com/arjenhiemstra/IthoEcoFanRFT/blob/master/Master/Itho/CC1101.cpp
+# https://github.com/SpaceTeddy/CC1101/blob/master/cc1100_raspi.cpp
+# https://github.com/SpaceTeddy/CC1101/blob/master/cc1100_raspi.h
 #
+# Copyright 2021 (c) Erik de Lange
 # Released under MIT license
 
 import time
-from time import sleep_ms
+from time import sleep_ms, sleep_us
 
 import machine
 from machine import SPI, Pin
@@ -293,7 +292,9 @@ class CC1101:
         self.gdo2 = Pin(gdo2, mode=Pin.IN)
 
         self.deselect()
-        self.spi = SPI(spi_id, baudrate=8000000, polarity=0, phase=0, bits=8,
+#        self.spi = SPI(spi_id, baudrate=8000000, polarity=0, phase=0, bits=8,
+#                       firstbit=SPI.MSB)  # use default pins for mosi, miso and sclk
+        self.spi = SPI(spi_id, baudrate=1000000, polarity=0, phase=0, bits=8,
                        firstbit=SPI.MSB)  # use default pins for mosi, miso and sclk
         self.reset()
         self._freq = 868.3
@@ -463,15 +464,14 @@ class CC1101:
         # wait for packet or timeout
         start = time.ticks_us()
         while self.gdo0.value() == 0:
-            pass
             #machine.idle()
             #sleep_us(10)
             #_mod->yield();
 
-        if (time.ticks_us() - start) > timeout:
-            self.write_command(CC1101.SIDLE)
-            self.write_command(CC1101.SFRX)
-            return CC1101.ERR_RX_TIMEOUT, []
+            if (time.ticks_us() - start) > timeout:
+                self.write_command(CC1101.SIDLE)
+                self.write_command(CC1101.SFRX)
+                return CC1101.ERR_RX_TIMEOUT, []
 
         # read packet data
         return self.readData(length)
@@ -479,7 +479,7 @@ class CC1101:
     # FIXME
     def readData(self, length):
         # get packet length
-        _length = self.getPacketLength();
+        _length = self.getPacketLength()
         if (length != 0) and (length < _length):
             # user requested less data than we got, only return what was requested
             _length = length
@@ -498,20 +498,22 @@ class CC1101:
         # keep reading from FIFO until we get all the packet.
         while readBytes < _length:
             if bytesInFIFO == 0:
-                if time.ticks_ms() - lastPop > 5:
+                if (time.ticks_ms() - lastPop) > 5:
                     # readData was required to read a packet longer than the one received.
                     #RADIOLIB_DEBUG_PRINTLN(F("No data for more than 5mS. Stop here."));
                     break
                 else:
                     sleep_ms(1)
-                    bytesInFIFO = self.SPIgetRegValue(CC1101.RXBYTES, 6, 0);
+                    bytesInFIFO = self.SPIgetRegValue(CC1101.RXBYTES, 6, 0)
                     continue
 
             # read the minimum between "remaining length" and bytesInFifo
             bytesToRead = min((_length - readBytes), bytesInFIFO)
             # self.SPIreadRegisterBurst(CC1101.FIFO, bytesToRead, &(data[readBytes]));
-            data.append(self.read_burst(CC1101.RXFIFO, bytesToRead))
-            readBytes += bytesToRead
+            #data.append(self.read_burst(CC1101.RXFIFO_BURST, bytesToRead))
+            #readBytes += bytesToRead
+            data.append(self.read_register(CC1101.RXFIFO))
+            readBytes += 1
             lastPop = time.ticks_ms()
 
             # Get how many bytes are left in FIFO.
@@ -519,7 +521,7 @@ class CC1101:
 
         
         # check if status bytes are enabled (default: RADIOLIB_CC1101_APPEND_STATUS_ON)
-        isAppendStatus = self.SPIgetRegValue(CC1101.PKTCTRL1, 2, 2) == CC1101.CC1101_APPEND_STATUS_ON
+        isAppendStatus = (self.SPIgetRegValue(CC1101.PKTCTRL1, 2, 2) == CC1101.CC1101_APPEND_STATUS_ON)
         
         # for some reason, we need this delay here to get the correct status bytes
         sleep_ms(3)
@@ -638,7 +640,7 @@ class CC1101:
         if (msb > 7) or (lsb > 7) or (lsb > msb):
             return CC1101.ERR_INVALID_BIT_RANGE
 
-        currentValue = self.read_register(reg);
+        currentValue = self.read_register(reg)
         mask = ~((0b11111111 << (msb + 1)) | (0b11111111 >> (8 - lsb)))
         newValue = (currentValue & ~mask) | (value & mask)
         self.write_register(reg, newValue)
@@ -733,19 +735,19 @@ class CC1101:
             powerRaw = paTable[2][f]
             
         elif power == -10:
-            powerRaw = paTable[3][f];
+            powerRaw = paTable[3][f]
             
         elif power == 0:
-            powerRaw = paTable[4][f];
+            powerRaw = paTable[4][f]
             
         elif power == 5:
-            powerRaw = paTable[5][f];
+            powerRaw = paTable[5][f]
             
         elif power == 7:
-            powerRaw = paTable[6][f];
+            powerRaw = paTable[6][f]
             
         elif power == 10:
-            powerRaw = paTable[7][f];
+            powerRaw = paTable[7][f]
             
         else:
             return CC1101.ERR_INVALID_OUTPUT_POWER
@@ -802,7 +804,7 @@ class CC1101:
             # check if target value is in this column
             if target >= intervalStart:
                 # save exponent value
-                exp = e;
+                exp = e
 
                 # calculate size of step between table rows
                 stepSize = intervalStart/mantOffset
@@ -835,7 +837,7 @@ class CC1101:
         # set frequency deviation to lowest available setting (required for digimodes)
         newFreqDev = freqDev
         if freqDev < 0.0:
-            newFreqDev = 1.587;
+            newFreqDev = 1.587
 
         # check range unless 0 (special value)
         if freqDev != 0:
