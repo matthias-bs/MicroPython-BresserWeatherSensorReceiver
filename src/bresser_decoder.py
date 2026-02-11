@@ -453,9 +453,10 @@ def decodeBresser7In1Payload(msg, msgSize):
         return DECODE_DIG_ERR
     
     sid = (msgw[2] << 8) | msgw[3]
-    stype = msg[6] >> 4  # raw data, no de-whitening
-    startup = (msg[6] & 0x08) == 0x00  # raw data, no de-whitening
-    ch = msg[6] & 0x07  # raw data, no de-whitening
+    # Sensor type, startup flag, and channel are derived from de-whitened data
+    stype = msgw[6] >> 4
+    startup = (msgw[6] & 0x08) == 0x00
+    ch = msgw[6] & 0x07
     
     flags = msgw[15] & 0x0f
     batt_ok = not ((flags & 0x06) == 0x06)
