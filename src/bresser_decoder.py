@@ -195,7 +195,8 @@ def decodeBresser6In1Payload(msg, _msgSize):
     f_3in1 = False
     
     # temperature, humidity(, uv) - shared with rain counter
-    temp_ok = humidity_ok = (flags == 0)
+    temp_ok = (flags == 0)
+    humidity_ok = (flags == 0)
     if temp_ok:
         sign     = (msg[13] >> 3) & 1
         temp_raw = (msg[12] >> 4) * 100 + (msg[12] & 0x0f) * 10 + (msg[13] >> 4)
