@@ -272,7 +272,7 @@ class CC1101:
 
         self._freq       = CC1101.CC1101_DEFAULT_FREQ
         self._br         = CC1101.CC1101_DEFAULT_BR
-        self._rawRSSI    = 0
+        self._rawRSSI    = None
         self._rawLQI     = 0
         self._modulation = CC1101.CC1101_MOD_FORMAT_2_FSK
 
@@ -557,6 +557,9 @@ class CC1101:
 
         
     def startReceive(self):
+        # Reset RSSI to ensure we don't use stale values
+        self._rawRSSI = None
+        
         # set mode to standby
         self.write_command(CC1101.SIDLE)
 
@@ -971,7 +974,7 @@ class CC1101:
     def getRSSI(self):
         # In packet mode with appended status bytes, use the RSSI from packet status
         # Otherwise, read from RSSI register
-        if self._directMode or self._rawRSSI != 0:
+        if self._directMode or self._rawRSSI is not None:
             if self._rawRSSI >= 128:
                 rssi = ((self._rawRSSI - 256.0)/2.0) - 74.0
             else:
