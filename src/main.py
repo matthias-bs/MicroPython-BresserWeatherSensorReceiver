@@ -6,7 +6,7 @@ from time import sleep, sleep_ms
 import config
 from cc1101 import CC1101
 from bresser_decoder import (
-    DECODE_INVALID, DECODE_OK, DECODE_PAR_ERR, DECODE_CHK_ERR, DECODE_DIG_ERR, DECODE_SKIP,
+    DECODE_INVALID, DECODE_OK, DECODE_SKIP,
     decodeBresser6In1Payload, decodeBresser5In1Payload, decodeBresser7In1Payload,
     decodeBresserLightningPayload, decodeBresserLeakagePayload
 )
