@@ -128,84 +128,155 @@ def add_bytes(message, num_bytes):
 #  DECODE_CHK_ERR - Checksum Error
 #
 def decodeBresser6In1Payload(msg, _msgSize):
+    """
+    Decode Bresser 6-in-1 weather sensor payload.
+    
+    Based on rtl_433 decoder:
+    https://github.com/merbanan/rtl_433/blob/master/src/devices/bresser_6in1.c
+    
+    Supports:
+    - Bresser Weather Center 7-in-1 indoor sensor
+    - Bresser new 5-in-1 sensors
+    - Froggit WH6000 sensors
+    - Ventus C8488A (W835)
+    - Bresser 3-in-1 Professional Wind Gauge / Anemometer PN 7002531
+    - Bresser Pool / Spa Thermometer PN 7009973
+    - Bresser Soil Moisture Sensor
+    """
     moisture_map = [0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 99] # scale is 20/3
+    
+    # Sensor type constants
+    SENSOR_TYPE_WEATHER1 = 1   # Weather station
+    SENSOR_TYPE_POOL_THERMO = 3  # Pool/spa thermometer  
+    SENSOR_TYPE_SOIL = 4       # Soil moisture sensor
     
     # LFSR-16 digest, generator 0x8810 init 0x5412
     chkdgst = (msg[0] << 8) | msg[1]
     digest  = lfsr_digest16(msg[2:], 15, 0x8810, 0x5412)
 
     if (chkdgst != digest):
-        print("Digest check failed - [0x{:02x}] != [0x{:02x}]\n".format(chkdgst, digest))
-        #return DECODE_DIG_ERR
+        print("Digest check failed - [0x{:04x}] != [0x{:04x}]".format(chkdgst, digest))
+        return DECODE_DIG_ERR
 
     # Checksum, add with carry
     # msg[2] to msg[17]
     _sum = add_bytes(msg[2:], 16)
     if ((_sum & 0xff) != 0xff):
-        print("Checksum failed\n")
-        #return DECODE_CHK_ERR
+        print("Checksum failed")
+        return DECODE_CHK_ERR
     
     sid   = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
     stype = msg[6] >> 4
     ch    = msg[6] & 7
+    startup = ((msg[6] & 0x8) == 0)
     flags = msg[16] & 0x0f
     
+    # Per-message status flags
+    temp_ok = False
+    humidity_ok = False
+    uv_ok = False
+    wind_ok = False
+    rain_ok = False
+    moisture_ok = False
+    
+    # Initialize variables
+    humidity = 0
+    uv = 0.0
+    batt_ok = False
+    wind_gust = 0.0
+    wind_avg = 0.0
+    wind_dir = 0.0
+    moisture = 0
+    
+    # Check for 3-in-1 Professional Wind Gauge
+    # Temperature below -50°C indicates incorrect sign bit interpretation
+    f_3in1 = False
+    
     # temperature, humidity(, uv) - shared with rain counter
-    temp_ok = humidity_ok = (flags == 0)
+    temp_ok = (flags == 0)
+    humidity_ok = (flags == 0)
     if temp_ok:
         sign     = (msg[13] >> 3) & 1
         temp_raw = (msg[12] >> 4) * 100 + (msg[12] & 0x0f) * 10 + (msg[13] >> 4)
-        temp     = (temp_raw - 1000) if (sign) else temp_raw * 0.1
+        temp     = ((temp_raw - 1000) * 0.1) if sign else (temp_raw * 0.1)
+        
+        # Correction for Bresser 3-in-1 Professional Wind Gauge / Anemometer
+        # The temperature range is -40...+60°C
+        # If temperature is below -50°C, the sign bit is inverted
+        if temp < -50.0:
+            temp = temp_raw * 0.1
+            f_3in1 = True
+            
         batt_ok  = (msg[13] >> 1) & 1
         humidity = (msg[14] >> 4) * 10 + (msg[14] & 0x0f)
         
         # apparently ff01 or 0000 if not available, ???0 if valid, inverted BCD
-        uv_ok  = (~msg[15] & 0xff) <= 0x99 and (~msg[16] & 0xf0) <= 0x90
+        uv_ok  = ((~msg[15] & 0xff) <= 0x99) and ((~msg[16] & 0xf0) <= 0x90) and (not f_3in1)
         if uv_ok:
             uv_raw = ((~msg[15] & 0xf0) >> 4) * 100 + (~msg[15] & 0x0f) * 10 + ((~msg[16] & 0xf0) >> 4)
             uv     = uv_raw * 0.1
     
+    # invert 3 bytes wind speeds
+    msg7 = msg[7] ^ 0xff
+    msg8 = msg[8] ^ 0xff
+    msg9 = msg[9] ^ 0xff
+    
+    wind_ok = (msg7 <= 0x99) and (msg8 <= 0x99) and (msg9 <= 0x99)
+    if wind_ok:
+        gust_raw = (msg7 >> 4) * 100 + (msg7 & 0x0f) * 10 + (msg8 >> 4)
+        wavg_raw = (msg9 >> 4) * 100 + (msg9 & 0x0f) * 10 + (msg8 & 0x0f)
+        wind_dir_raw = ((msg[10] & 0xf0) >> 4) * 100 + (msg[10] & 0x0f) * 10 + ((msg[11] & 0xf0) >> 4)
+        
+        wind_gust = gust_raw * 0.1
+        wind_avg  = wavg_raw * 0.1
+        wind_dir  = float(wind_dir_raw)
+    
+    # rain counter, inverted 3 bytes BCD - shared with temp/hum
     msg12 = msg[12] ^ 0xff
     msg13 = msg[13] ^ 0xff
     msg14 = msg[14] ^ 0xff
     
-    rain_ok = (flags == 1) and (stype == 1)
+    rain_ok = (flags == 1) and (stype == SENSOR_TYPE_WEATHER1)
     if rain_ok:
         rain_raw  =   (msg12 >> 4) * 100000 + (msg12 & 0x0f) * 10000 \
                     + (msg13 >> 4) * 1000   + (msg13 & 0x0f) * 100 \
                     + (msg14 >> 4) * 10     + (msg14 & 0x0f)
         rain_mm   = rain_raw * 0.1
     
-    msg7 = msg[7] ^ 0xff
-    msg8 = msg[8] ^ 0xff
-    msg9 = msg[9] ^ 0xff
-    wind_gust  = (msg7 >> 4) * 100 + (msg7 & 0xf) * 10 + (msg8 >> 4)
-    wind_gust *= 0.1
-    wind_avg   = (msg9 >> 4) * 100 + (msg9 & 0xf) * 10 + (msg8 & 0xf)
-    wind_avg  *= 0.1
-    wind_dir   = ((msg[10] & 0xf0) >> 4) * 100 + (msg[10] & 0x0f) * 10 + (msg[11] & 0xf0) >> 4
-    
-    moisture_ok = 0
+    # Pool / Spa thermometer
+    if stype == SENSOR_TYPE_POOL_THERMO:
+        humidity_ok = False
     
     # the moisture sensor might present valid readings but does not have the hardware
-    if stype == 4:
-        wind_ok = 0
-        uv_ok   = 0
-
+    if stype == SENSOR_TYPE_SOIL:
+        wind_ok = False
+        uv_ok   = False
     
-    if stype == 4 and temp_ok and humidity >= 1 and humidity <= 16:
-        moisture_ok = 1
-        humidity_ok = 0
+    if stype == SENSOR_TYPE_SOIL and temp_ok and humidity >= 1 and humidity <= 16:
+        moisture_ok = True
+        humidity_ok = False
         moisture = moisture_map[humidity - 1]
     
+    # Print decoded data
+    print("ID: 0x{:08x}  Type: {:d}  Channel: {:d}  Battery: {}  Startup: {}".format(
+        sid, stype, ch, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
+    
     if moisture_ok:
-        print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} moist: {:d}\n".format(sid, stype, ch, batt_ok, temp, moisture))
-    elif wind_ok and temp_ok and uv_ok:
-        print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} uv: {:.1f} hum: {:d} w_gust: {:.1f} w_avg: {:.1f} w_dir: {:.1f}\n".format(sid, stype, ch, batt_ok, temp, uv, humidity, wind_gust, wind_avg, wind_dir))
-    elif wind_ok and temp_ok:
-        print("id: 0x{:02x} type: {:d} ch: {:d} batt_ok: {:d} temp: {:.1f} hum: {:d} w_gust: {:.1f} w_avg: {:.1f} w_dir: {:.1f}\n".format(sid, stype, ch, batt_ok, temp, humidity, wind_gust, wind_avg, wind_dir))
-    elif rain_ok:
-        print("id: 0x{:02x} type: {:d} ch: {:d} rain: {:.1f} w_gust: {:.1f} w_avg: {:.1f} w_dir: {:.1f}\n".format(sid, stype, ch, rain_mm, wind_gust, wind_avg, wind_dir))
+        print("  Temperature: {:.1f}°C  Moisture: {:d}%".format(temp, moisture))
+    elif temp_ok and humidity_ok:
+        print("  Temperature: {:.1f}°C  Humidity: {:d}%".format(temp, humidity))
+    elif temp_ok:
+        print("  Temperature: {:.1f}°C".format(temp))
+    
+    if uv_ok:
+        print("  UV Index: {:.1f}".format(uv))
+    
+    if wind_ok:
+        print("  Wind: Gust={:.1f}m/s  Avg={:.1f}m/s  Dir={:.1f}°".format(
+            wind_gust, wind_avg, wind_dir))
+    
+    if rain_ok:
+        print("  Rain: {:.1f}mm".format(rain_mm))
     
     return DECODE_OK
     
