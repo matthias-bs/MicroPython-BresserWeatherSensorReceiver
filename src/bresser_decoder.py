@@ -555,8 +555,8 @@ def decodeBresserLightningPayload(msg, msgSize):
         return DECODE_DIG_ERR
     
     sid = (msgw[2] << 8) | msgw[3]
-    stype = msg[6] >> 4  # raw data
-    startup = (msg[6] & 0x8) == 0x00  # raw data
+    stype = msgw[6] >> 4
+    startup = (msgw[6] & 0x8) == 0x00
     
     # Counter encoded as BCD with most significant digit counting up to 15!
     # Maximum value: 1599
