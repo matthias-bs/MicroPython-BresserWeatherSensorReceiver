@@ -45,31 +45,19 @@ def getMessage():
             
             # Try all decoders in sequence until one succeeds
             # Order: 7-in-1, 6-in-1, 5-in-1, Lightning, Leakage
-            decode_res = decodeBresser7In1Payload(recvData[1:], 26)
+            decoders = [
+                decodeBresser7In1Payload,
+                decodeBresser6In1Payload,
+                decodeBresser5In1Payload,
+                decodeBresserLightningPayload,
+                decodeBresserLeakagePayload
+            ]
             
-            if (decode_res == DECODE_INVALID) or \
-               (decode_res == DECODE_PAR_ERR) or \
-               (decode_res == DECODE_CHK_ERR) or \
-               (decode_res == DECODE_DIG_ERR):
-                decode_res = decodeBresser6In1Payload(recvData[1:], 26)
-            
-            if (decode_res == DECODE_INVALID) or \
-               (decode_res == DECODE_PAR_ERR) or \
-               (decode_res == DECODE_CHK_ERR) or \
-               (decode_res == DECODE_DIG_ERR):
-                decode_res = decodeBresser5In1Payload(recvData[1:], 26)
-            
-            if (decode_res == DECODE_INVALID) or \
-               (decode_res == DECODE_PAR_ERR) or \
-               (decode_res == DECODE_CHK_ERR) or \
-               (decode_res == DECODE_DIG_ERR):
-                decode_res = decodeBresserLightningPayload(recvData[1:], 26)
-            
-            if (decode_res == DECODE_INVALID) or \
-               (decode_res == DECODE_PAR_ERR) or \
-               (decode_res == DECODE_CHK_ERR) or \
-               (decode_res == DECODE_DIG_ERR):
-                decode_res = decodeBresserLeakagePayload(recvData[1:], 26)
+            decode_res = DECODE_INVALID
+            for decoder in decoders:
+                decode_res = decoder(recvData[1:], 26)
+                if decode_res == DECODE_OK or decode_res == DECODE_SKIP:
+                    break
             
     elif rcvState == CC1101.ERR_RX_TIMEOUT:
         print("T", end='')

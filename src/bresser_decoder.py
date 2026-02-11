@@ -434,8 +434,9 @@ def decodeBresser7In1Payload(msg, msgSize):
     SENSOR_TYPE_CO2 = 14        # CO2 sensor
     SENSOR_TYPE_HCHO_VOC = 15   # HCHO/VOC sensor
     
+    # Sanity check - warns if data looks suspicious but doesn't fail decoding
     if msg[21] == 0x00:
-        print("Data sanity check failed")
+        print("Warning: Data sanity check failed (msg[21] == 0x00)")
     
     # Data de-whitening
     msgw = bytearray(msgSize)
@@ -626,29 +627,28 @@ def main():
     print()
     
     print("\n=== Testing 5-in-1 Decoder ===")
-    # Test data for 5-in-1 - from rtl_433 test data
-    # This is a synthetic example based on the decoder structure
+    # NOTE: This is synthetic test data for demonstration purposes.
+    # Real test data from rtl_433 or actual sensors would be better for validation.
     # First 13 bytes and last 13 bytes should be inverse
     msg5in1 = bytes([0xD4,  # sync word (excluded from processing)
                      0xEA, 0x7F, 0x5F, 0xC7, 0x8E, 0x33, 0x51, 0xC5, 0xD7, 0xDD, 0xBB, 0xC4, 0xA6,  # First 13 bytes
                      0x5C,  # Checksum (bits set)
                      0x15, 0x80, 0xA0, 0x38, 0x71, 0xCC, 0xAE, 0x3A, 0x28, 0x22, 0x44, 0x3B, 0x59]) # Last 13 bytes (inverse)
-    # Note: This test data may fail validation as it's synthetic
     result = decodeBresser5In1Payload(msg5in1[1:], 26)
-    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED")
+    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED (expected with synthetic data)")
     print()
     
     print("\n=== Testing 7-in-1 Decoder ===")
-    # Test data for 7-in-1 with whitening applied (raw received data before de-whitening)
-    # Based on rtl_433 test cases
+    # NOTE: This is placeholder data for demonstration purposes.
+    # Real test data from rtl_433 test cases would be better for validation.
+    # The 7-in-1 decoder requires proper whitened data with valid digest.
     msg7in1 = bytes([0xD4,  # sync word
                      0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 
                      0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                      0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                      0xAA, 0xAA])
-    # This will likely fail as it needs proper test data
     result = decodeBresser7In1Payload(msg7in1[1:], 26)
-    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED")
+    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED (expected with placeholder data)")
     print()
     
     print("\n=== Testing Lightning Decoder ===")
