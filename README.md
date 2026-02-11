@@ -6,7 +6,7 @@ Work in progress...
 Current status:
 * CC1101 initialization :heavy_check_mark: -- Compared register contents with [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver)
 
-* Radio Message Reception :x: -- Seems to fail to detect start of frame
+* Radio Message Reception :heavy_check_mark:
 
 * Protocol Decoders:
   * **6-in-1 Decoder** :heavy_check_mark: -- Fully ported from [rtl_433](https://github.com/merbanan/rtl_433)
