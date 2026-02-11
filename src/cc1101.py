@@ -974,12 +974,14 @@ class CC1101:
     def getRSSI(self):
         # In packet mode with appended status bytes, use the RSSI from packet status
         # Otherwise, read from RSSI register
-        if self._directMode or self._rawRSSI is not None:
+        if self._rawRSSI is not None:
+            # Use RSSI from packet status bytes
             if self._rawRSSI >= 128:
                 rssi = ((self._rawRSSI - 256.0)/2.0) - 74.0
             else:
                 rssi = ((self._rawRSSI)/2.0) - 74.0
         else:
+            # Fall back to reading RSSI register (works in both direct and packet mode)
             rawRssi = self.read_register(CC1101.RSSI)
             if rawRssi >= 128:
                 rssi = ((rawRssi - 256) / 2) - 74
