@@ -563,10 +563,8 @@ class CC1101:
         # flush Rx FIFO
         self.write_command(CC1101.SFRX)
 
-        # set GDO0 mapping: Asserted when RX FIFO > 4 bytes.
-        state  = self.SPIsetRegValue(CC1101.IOCFG0, CC1101.CC1101_GDOX_RX_FIFO_FULL_OR_PKT_END)
-        state |= self.SPIsetRegValue(CC1101.FIFOTHR, CC1101.CC1101_FIFO_THR_TX_61_RX_4, 3, 0)
-        #RADIOLIB_ASSERT(state);
+        # GDO0 and FIFOTHR are already configured in config()
+        # No need to reconfigure them here
 
         # set RF switch (if present)
         #_mod->setRfSwitchState(Module::MODE_RX);
@@ -574,7 +572,7 @@ class CC1101:
         # set mode to receive
         self.write_command(CC1101.SRX)
 
-        return state
+        return CC1101.ERR_NONE
 
     def getPacketLength(self, update = True):
         if not(self._packetLengthQueried) and update:
@@ -667,6 +665,10 @@ class CC1101:
 
         # set gdo2 to high impedance
         self.SPIsetRegValue(CC1101.IOCFG2, CC1101.CC1101_GDOX_HIGH_Z)
+        
+        # Configure GDO0 for packet reception: Asserts when RX FIFO > threshold or packet end
+        state |= self.SPIsetRegValue(CC1101.IOCFG0, CC1101.CC1101_GDOX_RX_FIFO_FULL_OR_PKT_END)
+        state |= self.SPIsetRegValue(CC1101.FIFOTHR, CC1101.CC1101_FIFO_THR_TX_61_RX_4, 3, 0)
         
         # set packet mode
         state = self.packetMode()
