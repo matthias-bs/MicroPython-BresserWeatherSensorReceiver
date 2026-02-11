@@ -426,19 +426,26 @@ def decodeBresser7In1Payload(msg, msgSize):
     - CO2 sensors
     - HCHO/VOC sensors
     """
-    # Sensor type constants
-    SENSOR_TYPE_WEATHER1 = 1    # Weather station (type 1)
-    SENSOR_TYPE_WEATHER3 = 3    # Weather station (type 3, 3-in-1)
-    SENSOR_TYPE_WEATHER8 = 8    # Weather station (type 8, 8-in-1 with globe temp)
-    SENSOR_TYPE_AIR_PM = 13     # Air Quality (Particulate Matter) sensor
-    SENSOR_TYPE_CO2 = 14        # CO2 sensor
-    SENSOR_TYPE_HCHO_VOC = 15   # HCHO/VOC sensor
+    # Sensor type constants (from rtl_433 bresser_7in1.c)
+    SENSOR_TYPE_WEATHER1 = 1     # Weather station (type 1)
+    SENSOR_TYPE_THERMO_HYGRO = 2 # Thermo-/Hygro-Sensor (sometimes used for Air PM)
+    SENSOR_TYPE_AIR_PM = 8       # Air Quality (Particulate Matter) sensor
+    SENSOR_TYPE_CO2 = 10         # CO2 sensor
+    SENSOR_TYPE_HCHO_VOC = 11    # HCHO/VOC sensor
+    SENSOR_TYPE_WEATHER3 = 12    # Weather station (type 12, 3-in-1)
+    SENSOR_TYPE_WEATHER8 = 13    # Weather station (type 13, 8-in-1 with globe temp)
     
     # Sanity check - warns if data looks suspicious but doesn't fail decoding
     # Note: This check is done on raw (whitened) data before de-whitening,
     # as per the C++ implementation
     if msg[21] == 0x00:
         print("Warning: Data sanity check failed (msg[21] == 0x00)")
+    
+    # Extract sensor type, startup flag, and channel from RAW data (before de-whitening)
+    # This is critical - rtl_433 extracts these BEFORE de-whitening!
+    stype = msg[6] >> 4
+    startup = (msg[6] & 0x08) == 0x00
+    ch = msg[6] & 0x07
     
     # Data de-whitening
     msgw = bytearray(msgSize)
@@ -453,10 +460,6 @@ def decodeBresser7In1Payload(msg, msgSize):
         return DECODE_DIG_ERR
     
     sid = (msgw[2] << 8) | msgw[3]
-    # Sensor type, startup flag, and channel are derived from de-whitened data
-    stype = msgw[6] >> 4
-    startup = (msgw[6] & 0x08) == 0x00
-    ch = msgw[6] & 0x07
     
     flags = msgw[15] & 0x0f
     batt_ok = not ((flags & 0x06) == 0x06)
@@ -543,6 +546,10 @@ def decodeBresserLightningPayload(msg, msgSize):
     The data has a whitening of 0xaa.
     LFSR-16 digest, generator 0x8810 key 0xabf9 with a final xor 0x899e
     """
+    # Extract sensor type and startup from RAW data (before de-whitening)
+    stype = msg[6] >> 4
+    startup = (msg[6] & 0x8) == 0x00
+    
     # Data de-whitening
     msgw = bytearray(msgSize)
     for i in range(msgSize):
@@ -556,8 +563,6 @@ def decodeBresserLightningPayload(msg, msgSize):
         return DECODE_DIG_ERR
     
     sid = (msgw[2] << 8) | msgw[3]
-    stype = msgw[6] >> 4
-    startup = (msgw[6] & 0x8) == 0x00
     
     # Counter encoded as BCD with most significant digit counting up to 15!
     # Maximum value: 1599
