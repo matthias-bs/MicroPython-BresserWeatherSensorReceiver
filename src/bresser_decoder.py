@@ -428,7 +428,6 @@ def decodeBresser7In1Payload(msg, msgSize):
     """
     # Sensor type constants (from rtl_433 bresser_7in1.c)
     SENSOR_TYPE_WEATHER1 = 1     # Weather station (type 1)
-    SENSOR_TYPE_THERMO_HYGRO = 2 # Thermo-/Hygro-Sensor (sometimes used for Air PM)
     SENSOR_TYPE_AIR_PM = 8       # Air Quality (Particulate Matter) sensor
     SENSOR_TYPE_CO2 = 10         # CO2 sensor
     SENSOR_TYPE_HCHO_VOC = 11    # HCHO/VOC sensor
