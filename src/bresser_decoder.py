@@ -260,7 +260,7 @@ def decodeBresser6In1Payload(msg, _msgSize):
     
     # Print decoded data
     print("ID: 0x{:08x}  Type: {:d}  Channel: {:d}  Battery: {}  Startup: {}".format(
-        sid, stype, ch, "OK" if batt_ok else "Low", startup))
+        sid, stype, ch, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
     
     if moisture_ok:
         print("  Temperature: {:.1f}°C  Moisture: {:d}%".format(temp, moisture))
