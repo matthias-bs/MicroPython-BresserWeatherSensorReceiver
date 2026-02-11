@@ -281,7 +281,7 @@ class CC1101:
         self._packetLengthConfig  = CC1101.CC1101_LENGTH_CONFIG_VARIABLE
 
         self._promiscuous = False
-        self._crcOn       = True
+        self._crcOn       = False  # Default to CRC disabled to match Bresser sensor RadioLib config
         self._directMode  = False # True?
 
         self._power = CC1101.CC1101_DEFAULT_POWER
@@ -917,7 +917,9 @@ class CC1101:
     def packetMode(self):
         state  = self.SPIsetRegValue(CC1101.PKTCTRL1, CC1101.CC1101_CRC_AUTOFLUSH_OFF | CC1101.CC1101_APPEND_STATUS_ON | CC1101.CC1101_ADR_CHK_NONE, 3, 0)
         state |= self.SPIsetRegValue(CC1101.PKTCTRL0, CC1101.CC1101_WHITE_DATA_OFF | CC1101.CC1101_PKT_FORMAT_NORMAL, 6, 4)
-        state |= self.SPIsetRegValue(CC1101.PKTCTRL0, CC1101.CC1101_CRC_ON | self._packetLengthConfig, 2, 0)
+        # Use current _crcOn state to match RadioLib configuration
+        crcSetting = CC1101.CC1101_CRC_ON if self._crcOn else CC1101.CC1101_CRC_OFF
+        state |= self.SPIsetRegValue(CC1101.PKTCTRL0, crcSetting | self._packetLengthConfig, 2, 0)
         return state
 
     def setCrcFiltering(self, crcOn):
