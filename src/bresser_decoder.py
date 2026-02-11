@@ -180,7 +180,6 @@ def decodeBresser6In1Payload(msg, _msgSize):
     moisture_ok = False
     
     # Initialize variables
-    temp = 0.0
     humidity = 0
     uv = 0.0
     batt_ok = False
