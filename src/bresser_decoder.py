@@ -231,7 +231,7 @@ def decodeBresser6In1Payload(msg, _msgSize):
         
         wind_gust = gust_raw * 0.1
         wind_avg  = wavg_raw * 0.1
-        wind_dir  = wind_dir_raw * 1.0
+        wind_dir  = float(wind_dir_raw)
     
     # rain counter, inverted 3 bytes BCD - shared with temp/hum
     msg12 = msg[12] ^ 0xff
