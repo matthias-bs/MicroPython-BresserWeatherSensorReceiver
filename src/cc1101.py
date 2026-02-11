@@ -272,7 +272,7 @@ class CC1101:
 
         self._freq       = CC1101.CC1101_DEFAULT_FREQ
         self._br         = CC1101.CC1101_DEFAULT_BR
-        self._rawRSSI    = 0
+        self._rawRSSI    = None
         self._rawLQI     = 0
         self._modulation = CC1101.CC1101_MOD_FORMAT_2_FSK
 
@@ -521,7 +521,7 @@ class CC1101:
 
         
         # check if status bytes are enabled (default: RADIOLIB_CC1101_APPEND_STATUS_ON)
-        isAppendStatus = (self.SPIgetRegValue(CC1101.PKTCTRL1, 2, 2) == CC1101.CC1101_APPEND_STATUS_ON)
+        isAppendStatus = (self.SPIgetRegValue(CC1101.PKTCTRL1, 2, 2) != 0)
         
         # for some reason, we need this delay here to get the correct status bytes
         sleep_ms(3)
@@ -557,6 +557,9 @@ class CC1101:
 
         
     def startReceive(self):
+        # Reset RSSI to ensure we don't use stale values
+        self._rawRSSI = None
+        
         # set mode to standby
         self.write_command(CC1101.SIDLE)
 
@@ -650,7 +653,7 @@ class CC1101:
 
         rawValue = self.read_register(reg)
         maskedValue = rawValue & ((0xFF << lsb) & (0xFF >> (7 - msb)))
-        return maskedValue
+        return maskedValue >> lsb
 
     def config(self):
         # Reset the radio. Registers may be dirty from previous usage.
@@ -969,12 +972,16 @@ class CC1101:
         return self.SPIsetRegValue(CC1101.MDMCFG2, CC1101.CC1101_SYNC_MODE_NONE_THR if requireCarrierSense else CC1101.CC1101_SYNC_MODE_NONE, 2, 0)
 
     def getRSSI(self):
-        if self._directMode:
+        # In packet mode with appended status bytes, use the RSSI from packet status
+        # Otherwise, read from RSSI register
+        if self._rawRSSI is not None:
+            # Use RSSI from packet status bytes
             if self._rawRSSI >= 128:
                 rssi = ((self._rawRSSI - 256.0)/2.0) - 74.0
             else:
                 rssi = ((self._rawRSSI)/2.0) - 74.0
         else:
+            # Fall back to reading RSSI register (works in both direct and packet mode)
             rawRssi = self.read_register(CC1101.RSSI)
             if rawRssi >= 128:
                 rssi = ((rawRssi - 256) / 2) - 74
