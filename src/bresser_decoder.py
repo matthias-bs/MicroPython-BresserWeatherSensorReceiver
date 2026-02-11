@@ -435,6 +435,8 @@ def decodeBresser7In1Payload(msg, msgSize):
     SENSOR_TYPE_HCHO_VOC = 15   # HCHO/VOC sensor
     
     # Sanity check - warns if data looks suspicious but doesn't fail decoding
+    # Note: This check is done on raw (whitened) data before de-whitening,
+    # as per the C++ implementation
     if msg[21] == 0x00:
         print("Warning: Data sanity check failed (msg[21] == 0x00)")
     
@@ -599,6 +601,8 @@ def decodeBresserLeakagePayload(msg, msgSize):
     batt_ok = (msg[7] & 0x30) != 0x00
     
     # Sanity checks
+    # alarm and no_alarm should be opposites (one true, one false)
+    # If they're both true or both false, the data is invalid
     if (stype != SENSOR_TYPE_LEAKAGE) or (alarm == no_alarm) or (ch == 0):
         return DECODE_INVALID
     
