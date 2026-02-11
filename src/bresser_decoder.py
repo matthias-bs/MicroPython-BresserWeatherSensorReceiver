@@ -203,8 +203,9 @@ def decodeBresser6In1Payload(msg, _msgSize):
         
         # Correction for Bresser 3-in-1 Professional Wind Gauge / Anemometer
         # The temperature range is -40...+60°C
+        # If temperature is below -50°C, the sign bit is inverted
         if temp < -50.0:
-            temp = -temp_raw * 0.1
+            temp = temp_raw * 0.1
             f_3in1 = True
             
         batt_ok  = (msg[13] >> 1) & 1
