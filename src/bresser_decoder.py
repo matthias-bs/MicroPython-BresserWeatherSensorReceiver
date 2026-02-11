@@ -183,7 +183,6 @@ def decodeBresser6In1Payload(msg, _msgSize):
     humidity = 0
     uv = 0.0
     batt_ok = False
-    rain_mm = 0.0
     wind_gust = 0.0
     wind_avg = 0.0
     wind_dir = 0.0
