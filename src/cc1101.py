@@ -664,14 +664,14 @@ class CC1101:
         # RADIOLIB_ASSERT(state);
 
         # set gdo2 to high impedance
-        self.SPIsetRegValue(CC1101.IOCFG2, CC1101.CC1101_GDOX_HIGH_Z)
+        state |= self.SPIsetRegValue(CC1101.IOCFG2, CC1101.CC1101_GDOX_HIGH_Z)
         
         # Configure GDO0 for packet reception: Asserts when RX FIFO > threshold or packet end
         state |= self.SPIsetRegValue(CC1101.IOCFG0, CC1101.CC1101_GDOX_RX_FIFO_FULL_OR_PKT_END)
         state |= self.SPIsetRegValue(CC1101.FIFOTHR, CC1101.CC1101_FIFO_THR_TX_61_RX_4, 3, 0)
         
         # set packet mode
-        state = self.packetMode()
+        state |= self.packetMode()
 
         return state
 
