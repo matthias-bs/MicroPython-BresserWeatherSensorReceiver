@@ -281,7 +281,7 @@ class CC1101:
         self._packetLengthConfig  = CC1101.CC1101_LENGTH_CONFIG_VARIABLE
 
         self._promiscuous = False
-        self._crcOn       = True
+        self._crcOn       = False  # Default to CRC disabled to match Bresser sensor RadioLib config
         self._directMode  = False # True?
 
         self._power = CC1101.CC1101_DEFAULT_POWER
@@ -563,10 +563,8 @@ class CC1101:
         # flush Rx FIFO
         self.write_command(CC1101.SFRX)
 
-        # set GDO0 mapping: Asserted when RX FIFO > 4 bytes.
-        state  = self.SPIsetRegValue(CC1101.IOCFG0, CC1101.CC1101_GDOX_RX_FIFO_FULL_OR_PKT_END)
-        state |= self.SPIsetRegValue(CC1101.FIFOTHR, CC1101.CC1101_FIFO_THR_TX_61_RX_4, 3, 0)
-        #RADIOLIB_ASSERT(state);
+        # GDO0 and FIFOTHR are already configured in config()
+        # No need to reconfigure them here
 
         # set RF switch (if present)
         #_mod->setRfSwitchState(Module::MODE_RX);
@@ -574,7 +572,7 @@ class CC1101:
         # set mode to receive
         self.write_command(CC1101.SRX)
 
-        return state
+        return CC1101.ERR_NONE
 
     def getPacketLength(self, update = True):
         if not(self._packetLengthQueried) and update:
@@ -666,10 +664,14 @@ class CC1101:
         # RADIOLIB_ASSERT(state);
 
         # set gdo2 to high impedance
-        self.SPIsetRegValue(CC1101.IOCFG2, CC1101.CC1101_GDOX_HIGH_Z)
+        state |= self.SPIsetRegValue(CC1101.IOCFG2, CC1101.CC1101_GDOX_HIGH_Z)
+        
+        # Configure GDO0 for packet reception: Asserted when RX FIFO > threshold or packet end
+        state |= self.SPIsetRegValue(CC1101.IOCFG0, CC1101.CC1101_GDOX_RX_FIFO_FULL_OR_PKT_END)
+        state |= self.SPIsetRegValue(CC1101.FIFOTHR, CC1101.CC1101_FIFO_THR_TX_61_RX_4, 3, 0)
         
         # set packet mode
-        state = self.packetMode()
+        state |= self.packetMode()
 
         return state
 
@@ -915,7 +917,9 @@ class CC1101:
     def packetMode(self):
         state  = self.SPIsetRegValue(CC1101.PKTCTRL1, CC1101.CC1101_CRC_AUTOFLUSH_OFF | CC1101.CC1101_APPEND_STATUS_ON | CC1101.CC1101_ADR_CHK_NONE, 3, 0)
         state |= self.SPIsetRegValue(CC1101.PKTCTRL0, CC1101.CC1101_WHITE_DATA_OFF | CC1101.CC1101_PKT_FORMAT_NORMAL, 6, 4)
-        state |= self.SPIsetRegValue(CC1101.PKTCTRL0, CC1101.CC1101_CRC_ON | self._packetLengthConfig, 2, 0)
+        # Use current _crcOn state to match RadioLib configuration
+        crcSetting = CC1101.CC1101_CRC_ON if self._crcOn else CC1101.CC1101_CRC_OFF
+        state |= self.SPIsetRegValue(CC1101.PKTCTRL0, crcSetting | self._packetLengthConfig, 2, 0)
         return state
 
     def setCrcFiltering(self, crcOn):
