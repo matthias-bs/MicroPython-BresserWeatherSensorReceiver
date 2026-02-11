@@ -633,10 +633,9 @@ def main():
     print("\n=== Testing 5-in-1 Decoder ===")
     # NOTE: This is synthetic test data for demonstration purposes.
     # Real test data from rtl_433 or actual sensors would be better for validation.
-    # First 13 bytes and last 13 bytes should be inverse
+    # First 13 bytes and last 13 bytes should be inverse (total payload 26 bytes)
     msg5in1 = bytes([0xD4,  # sync word (excluded from processing)
                      0xEA, 0x7F, 0x5F, 0xC7, 0x8E, 0x33, 0x51, 0xC5, 0xD7, 0xDD, 0xBB, 0xC4, 0xA6,  # First 13 bytes
-                     0x5C,  # Checksum (bits set)
                      0x15, 0x80, 0xA0, 0x38, 0x71, 0xCC, 0xAE, 0x3A, 0x28, 0x22, 0x44, 0x3B, 0x59]) # Last 13 bytes (inverse)
     result = decodeBresser5In1Payload(msg5in1[1:], 26)
     print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED (expected with synthetic data)")
