@@ -5,7 +5,11 @@
 from time import sleep, sleep_ms
 import config
 from cc1101 import CC1101
-from bresser_decoder import DECODE_INVALID, DECODE_OK, DECODE_PAR_ERR, DECODE_CHK_ERR, DECODE_DIG_ERR, decodeBresser6In1Payload
+from bresser_decoder import (
+    DECODE_INVALID, DECODE_OK, DECODE_SKIP,
+    decodeBresser6In1Payload, decodeBresser5In1Payload, decodeBresser7In1Payload,
+    decodeBresserLightningPayload, decodeBresserLeakagePayload
+)
 
 
 def getMessage():
@@ -39,15 +43,21 @@ def getMessage():
 
             print("[{:02X}] RSSI: {:0.1f}".format(recvData[0], cc1101.getRSSI()))
             
-            decode_res = decodeBresser6In1Payload(recvData[1:], 26)
+            # Try all decoders in sequence until one succeeds
+            # Order: 7-in-1, 6-in-1, 5-in-1, Lightning, Leakage
+            decoders = [
+                decodeBresser7In1Payload,
+                decodeBresser6In1Payload,
+                decodeBresser5In1Payload,
+                decodeBresserLightningPayload,
+                decodeBresserLeakagePayload
+            ]
             
-            
-            if (decode_res == DECODE_INVALID) or \
-               (decode_res == DECODE_PAR_ERR) or \
-               (decode_res == DECODE_CHK_ERR) or \
-               (decode_res == DECODE_DIG_ERR):
-                #decode_res = decodeBresser5In1Payload(&recvData[1], sizeof(recvData) - 1);
-                pass
+            decode_res = DECODE_INVALID
+            for decoder in decoders:
+                decode_res = decoder(recvData[1:], 26)
+                if decode_res == DECODE_OK or decode_res == DECODE_SKIP:
+                    break
             
     elif rcvState == CC1101.ERR_RX_TIMEOUT:
         print("T", end='')
