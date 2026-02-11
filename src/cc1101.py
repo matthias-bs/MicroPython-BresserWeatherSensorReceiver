@@ -521,7 +521,7 @@ class CC1101:
 
         
         # check if status bytes are enabled (default: RADIOLIB_CC1101_APPEND_STATUS_ON)
-        isAppendStatus = (self.SPIgetRegValue(CC1101.PKTCTRL1, 2, 2) == 1)
+        isAppendStatus = (self.SPIgetRegValue(CC1101.PKTCTRL1, 2, 2) != 0)
         
         # for some reason, we need this delay here to get the correct status bytes
         sleep_ms(3)
