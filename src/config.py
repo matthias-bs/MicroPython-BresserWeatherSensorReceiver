@@ -38,7 +38,7 @@
 #
 ###################################################################################################
 
-# BOARD: Generic ESP32
+BOARD = "Generic ESP32" # Reminder which board you have configured. Has no effect.
 
 # ESP32:
 # HSPI (id=1)
