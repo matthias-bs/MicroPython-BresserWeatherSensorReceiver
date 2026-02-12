@@ -54,9 +54,8 @@ test = [
     "pytest-cov>=4.1.0"
 ]
 dev = [
-    "pylint>=3.0.0",
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0"
+    "micropython-bresser-weather-sensor-receiver[test]",
+    "pylint>=3.0.0"
 ]
 
 [tool.setuptools]
