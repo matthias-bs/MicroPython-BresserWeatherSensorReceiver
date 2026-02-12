@@ -3,6 +3,46 @@ Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPyth
 
 Tested with [MicroPython](https://micropython.org/) v1.27.0 on ESP32
 
+## Hardware Connection
+
+The following diagram shows the wiring between the ESP32 and the CC1101 radio module:
+
+```mermaid
+graph LR
+    subgraph ESP32["ESP32 Module"]
+        ESP32_3V3["3.3V"]
+        ESP32_GND["GND"]
+        ESP32_GPIO23["GPIO 23<br/>(MOSI)"]
+        ESP32_GPIO19["GPIO 19<br/>(MISO)"]
+        ESP32_GPIO18["GPIO 18<br/>(SCK)"]
+        ESP32_GPIO27["GPIO 27<br/>(CS/SS)"]
+        ESP32_GPIO21["GPIO 21<br/>(GDO0)"]
+        ESP32_GPIO33["GPIO 33<br/>(GDO2)"]
+    end
+
+    subgraph CC1101["CC1101 Radio Module"]
+        CC1101_VCC["VCC (3.3V)"]
+        CC1101_GND["GND"]
+        CC1101_MOSI["MOSI/SI"]
+        CC1101_MISO["MISO/SO"]
+        CC1101_SCK["SCK/SCLK"]
+        CC1101_CSN["CSn"]
+        CC1101_GDO0["GDO0"]
+        CC1101_GDO2["GDO2"]
+    end
+
+    ESP32_3V3 --> CC1101_VCC
+    ESP32_GND --> CC1101_GND
+    ESP32_GPIO23 --> CC1101_MOSI
+    ESP32_GPIO19 --> CC1101_MISO
+    ESP32_GPIO18 --> CC1101_SCK
+    ESP32_GPIO27 --> CC1101_CSN
+    ESP32_GPIO21 --> CC1101_GDO0
+    ESP32_GPIO33 --> CC1101_GDO2
+```
+
+**Note:** Pin assignments are defined in `src/config.py` and use the ESP32's VSPI (SPI ID 2) hardware interface. The SPI pins (MOSI, MISO, SCK) are the hardware-defined defaults for VSPI on ESP32.
+
 ## Supported Bresser Sensor Protocols
 
 * **6-in-1 Decoder**
