@@ -241,7 +241,7 @@ def main():
     
     # Try to receive and decode sensor data
     while True:
-        res = getMessage(cc1101)
+        getMessage(cc1101)
         sleep_ms(10)
 
 if __name__ == "__main__":
