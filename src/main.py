@@ -200,7 +200,7 @@ def getMessage(cc1101):
     if rcvState == CC1101.ERR_NONE:
         # Verify last syncword is 1st byte of payload (see setSyncWord() above)
         if recvData[0] == 0xD4:
-            print(f"\n--- RSSI: {cc1101.getRSSI():0.1f} ---")
+            print(f"\n--- RSSI: {cc1101.getRSSI():0.1f} dBm ---")
             
             # Try all decoders in sequence until one succeeds
             # Order: 7-in-1, 6-in-1, 5-in-1, Lightning, Leakage
