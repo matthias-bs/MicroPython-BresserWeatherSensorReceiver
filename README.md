@@ -1,22 +1,7 @@
 # MicroPython-BresserWeatherSensorReceiver
 Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython
 
-## Example Console Output
-
-```
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
---- RSSI: -82.0 dBm ---
-TTTTTTTTTTTTTTTTT
---- RSSI: -72.5 dBm ---
-Soil Moisture Sensor: ID: 0x52828827  Type: 4  Channel: 1  Battery: OK  Startup: No
-  Temperature: 24.5°C  Moisture: 0%
-TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
-```
-
-* Each 'T' marks a message reception timeout
-* RSSI: Received Signal Strength Indicator
-* Common sensor data and sensor type specific measurement values
-* Only an RSSI value without subsequent data: unknown or invalid message (message integrity check failed)
+Tested with [MicroPython](https://micropython.org/) v1.27.0 on ESP32
 
 ## Supported Bresser Sensor Protocols
 
@@ -43,3 +28,20 @@ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 
 
 **Sequential Decoder Fallback** -- main.py tries all decoders in sequence until one succeeds
+
+## Example Console Output
+
+```
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+--- RSSI: -82.0 dBm ---
+TTTTTTTTTTTTTTTTT
+--- RSSI: -72.5 dBm ---
+Soil Moisture Sensor: ID: 0x52828827  Type: 4  Channel: 1  Battery: OK  Startup: No
+  Temperature: 24.5°C  Moisture: 0%
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+```
+
+* Each 'T' marks a message reception timeout
+* RSSI: Received Signal Strength Indicator
+* Common sensor data and sensor type specific measurement values
+* Only an RSSI value without subsequent data: unknown or invalid message (message integrity check failed)
