@@ -11,6 +11,26 @@ DECODE_DIG_ERR  = const(4)
 DECODE_SKIP     = const(5)
 DECODE_FULL     = const(6)
 
+# Log levels - MicroPython-compatible
+LOG_LEVEL_NONE = const(0)
+LOG_LEVEL_ERROR = const(1)
+LOG_LEVEL_WARNING = const(2)
+LOG_LEVEL_INFO = const(3)
+LOG_LEVEL_DEBUG = const(4)
+
+# Global log level
+log_level = LOG_LEVEL_ERROR
+
+def set_log_level(level):
+    """Set the global log level."""
+    global log_level
+    log_level = level
+
+def log_message(level, msg):
+    """Print a log message if the log level is sufficient."""
+    if level <= log_level:
+        print(msg)
+
 #
 # Ported from rtl_433 project - https://github.com/merbanan/rtl_433/blob/master/src/util.c
 #
@@ -172,6 +192,11 @@ def decodeBresser6In1Payload(msg, _msgSize):
     - Bresser 3-in-1 Professional Wind Gauge / Anemometer PN 7002531
     - Bresser Pool / Spa Thermometer PN 7009973
     - Bresser Soil Moisture Sensor
+    
+    Returns:
+        tuple: (status_code, data_dict or None)
+            status_code: DECODE_OK, DECODE_DIG_ERR, or DECODE_CHK_ERR
+            data_dict: Dictionary with decoded data if successful, None otherwise
     """
     moisture_map = [0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 99] # scale is 20/3
     
@@ -185,15 +210,15 @@ def decodeBresser6In1Payload(msg, _msgSize):
     digest  = lfsr_digest16(msg[2:], 15, 0x8810, 0x5412)
 
     if (chkdgst != digest):
-        print("Digest check failed - [0x{:04x}] != [0x{:04x}]".format(chkdgst, digest))
-        return DECODE_DIG_ERR
+        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chkdgst:04x}] != [0x{digest:04x}]")
+        return (DECODE_DIG_ERR, None)
 
     # Checksum, add with carry
     # msg[2] to msg[17]
     _sum = add_bytes(msg[2:], 16)
     if ((_sum & 0xff) != 0xff):
-        print("Checksum failed")
-        return DECODE_CHK_ERR
+        log_message(LOG_LEVEL_ERROR, "Checksum failed")
+        return (DECODE_CHK_ERR, None)
     
     sid   = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
     stype = msg[6] >> 4
@@ -210,6 +235,7 @@ def decodeBresser6In1Payload(msg, _msgSize):
     moisture_ok = False
     
     # Initialize variables
+    temp = 0.0
     humidity = 0
     uv = 0.0
     batt_ok = False
@@ -217,6 +243,7 @@ def decodeBresser6In1Payload(msg, _msgSize):
     wind_avg = 0.0
     wind_dir = 0.0
     moisture = 0
+    rain_mm = 0.0
     
     # Check for 3-in-1 Professional Wind Gauge
     # Temperature below -50°C indicates incorrect sign bit interpretation
@@ -287,28 +314,31 @@ def decodeBresser6In1Payload(msg, _msgSize):
         humidity_ok = False
         moisture = moisture_map[humidity - 1]
     
-    # Print decoded data
-    print("ID: 0x{:08x}  Type: {:d}  Channel: {:d}  Battery: {}  Startup: {}".format(
-        sid, stype, ch, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
+    # Build result dictionary
+    result = {
+        'sensor_id': sid,
+        'sensor_type': stype,
+        'channel': ch,
+        'battery_ok': batt_ok,
+        'startup': startup
+    }
     
+    if temp_ok:
+        result['temp_c'] = temp
+    if humidity_ok:
+        result['humidity'] = humidity
     if moisture_ok:
-        print("  Temperature: {:.1f}°C  Moisture: {:d}%".format(temp, moisture))
-    elif temp_ok and humidity_ok:
-        print("  Temperature: {:.1f}°C  Humidity: {:d}%".format(temp, humidity))
-    elif temp_ok:
-        print("  Temperature: {:.1f}°C".format(temp))
-    
+        result['moisture'] = moisture
     if uv_ok:
-        print("  UV Index: {:.1f}".format(uv))
-    
+        result['uv_index'] = uv
     if wind_ok:
-        print("  Wind: Gust={:.1f}m/s  Avg={:.1f}m/s  Dir={:.1f}°".format(
-            wind_gust, wind_avg, wind_dir))
-    
+        result['wind_gust_meter_sec'] = wind_gust
+        result['wind_avg_meter_sec'] = wind_avg
+        result['wind_direction_deg'] = wind_dir
     if rain_ok:
-        print("  Rain: {:.1f}mm".format(rain_mm))
+        result['rain_mm'] = rain_mm
     
-    return DECODE_OK
+    return (DECODE_OK, result)
 
 
 #
@@ -329,12 +359,17 @@ def decodeBresser5In1Payload(msg, msgSize):
     Supports:
     - Bresser 5-in-1 weather sensors
     - Bresser Professional Rain Gauge
+    
+    Returns:
+        tuple: (status_code, data_dict or None)
+            status_code: DECODE_OK, DECODE_PAR_ERR, or DECODE_CHK_ERR
+            data_dict: Dictionary with decoded data if successful, None otherwise
     """
     # First 13 bytes need to match inverse of last 13 bytes
     for col in range(msgSize // 2):
         if (msg[col] ^ msg[col + 13]) != 0xff:
-            print("Parity wrong at column {:d}".format(col))
-            return DECODE_PAR_ERR
+            log_message(LOG_LEVEL_ERROR, f"Parity wrong at column {col}")
+            return (DECODE_PAR_ERR, None)
     
     # Verify checksum (number bits set in bytes 14-25)
     bits_set = 0
@@ -347,8 +382,8 @@ def decodeBresser5In1Payload(msg, msgSize):
             current_byte >>= 1
     
     if bits_set != expected_bits_set:
-        print("Checksum wrong - actual [0x{:02X}] != [0x{:02X}]".format(bits_set, expected_bits_set))
-        return DECODE_CHK_ERR
+        log_message(LOG_LEVEL_ERROR, f"Checksum wrong - actual [0x{bits_set:02X}] != [0x{expected_bits_set:02X}]")
+        return (DECODE_CHK_ERR, None)
     
     sid = msg[14]
     stype = msg[15] & 0x7F
@@ -387,22 +422,25 @@ def decodeBresser5In1Payload(msg, msgSize):
         humidity_ok = False
         wind_ok = False
     
-    # Print decoded data
-    print("ID: 0x{:02x}  Type: {:d}  Battery: {}  Startup: {}".format(
-        sid, stype, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
+    # Build result dictionary
+    result = {
+        'sensor_id': sid,
+        'sensor_type': stype,
+        'battery_ok': batt_ok,
+        'startup': startup,
+        'rain_mm': rain_mm
+    }
     
-    if temp_ok and humidity_ok:
-        print("  Temperature: {:.1f}°C  Humidity: {:d}%".format(temp_c, humidity))
-    elif temp_ok:
-        print("  Temperature: {:.1f}°C".format(temp_c))
-    
+    if temp_ok:
+        result['temp_c'] = temp_c
+    if humidity_ok:
+        result['humidity'] = humidity
     if wind_ok:
-        print("  Wind: Gust={:.1f}m/s  Avg={:.1f}m/s  Dir={:.1f}°".format(
-            wind_gust, wind_avg, wind_direction_deg))
+        result['wind_gust_meter_sec'] = wind_gust
+        result['wind_avg_meter_sec'] = wind_avg
+        result['wind_direction_deg'] = wind_direction_deg
     
-    print("  Rain: {:.1f}mm".format(rain_mm))
-    
-    return DECODE_OK
+    return (DECODE_OK, result)
 
 
 #
@@ -425,6 +463,11 @@ def decodeBresser7In1Payload(msg, msgSize):
     - Air Quality (PM) sensors
     - CO2 sensors
     - HCHO/VOC sensors
+    
+    Returns:
+        tuple: (status_code, data_dict or None)
+            status_code: DECODE_OK or DECODE_DIG_ERR
+            data_dict: Dictionary with decoded data if successful, None otherwise
     """
     # Sensor type constants (from rtl_433 bresser_7in1.c)
     SENSOR_TYPE_WEATHER1 = 1     # Weather station (type 1)
@@ -438,7 +481,7 @@ def decodeBresser7In1Payload(msg, msgSize):
     # Note: This check is done on raw (whitened) data before de-whitening,
     # as per the C++ implementation
     if msg[21] == 0x00:
-        print("Warning: Data sanity check failed (msg[21] == 0x00)")
+        log_message(LOG_LEVEL_WARNING, "Warning: Data sanity check failed (msg[21] == 0x00)")
     
     # Extract sensor type, startup flag, and channel from RAW data (before de-whitening)
     # This is critical - rtl_433 extracts these BEFORE de-whitening!
@@ -455,16 +498,22 @@ def decodeBresser7In1Payload(msg, msgSize):
     chkdgst = (msgw[0] << 8) | msgw[1]
     digest = lfsr_digest16(msgw[2:], 23, 0x8810, 0xba95)
     if (chkdgst ^ digest) != 0x6df1:
-        print("Digest check failed - [0x{:04X}] vs [0x{:04X}] (0x{:04X})".format(chkdgst, digest, chkdgst ^ digest))
-        return DECODE_DIG_ERR
+        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chkdgst:04X}] vs [0x{digest:04X}] (0x{chkdgst ^ digest:04X})")
+        return (DECODE_DIG_ERR, None)
     
     sid = (msgw[2] << 8) | msgw[3]
     
     flags = msgw[15] & 0x0f
     batt_ok = not ((flags & 0x06) == 0x06)
     
-    print("ID: 0x{:04x}  Type: {:d}  Channel: {:d}  Battery: {}  Startup: {}".format(
-        sid, stype, ch, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
+    # Build result dictionary with common fields
+    result = {
+        'sensor_id': sid,
+        'sensor_type': stype,
+        'channel': ch,
+        'battery_ok': batt_ok,
+        'startup': startup
+    }
     
     if (stype == SENSOR_TYPE_WEATHER1) or (stype == SENSOR_TYPE_WEATHER3) or (stype == SENSOR_TYPE_WEATHER8):
         # Weather sensor data
@@ -493,43 +542,49 @@ def decodeBresser7In1Payload(msg, msgSize):
         uv_raw = (msgw[20] >> 4) * 100 + (msgw[20] & 0x0f) * 10 + (msgw[21] >> 4)
         uv_index = uv_raw * 0.1
         
-        print("  Temperature: {:.1f}°C  Humidity: {:d}%".format(temp_c, humidity))
-        print("  Rain: {:.1f}mm".format(rain_mm))
+        result['temp_c'] = temp_c
+        result['humidity'] = humidity
+        result['rain_mm'] = rain_mm
         
         if wind_light_ok:
             wind_gust = wgst_raw * 0.1
             wind_avg = wavg_raw * 0.1
-            print("  Wind: Gust={:.1f}m/s  Avg={:.1f}m/s  Dir={:.1f}°".format(
-                wind_gust, wind_avg, float(wdir)))
-            print("  Light: {:.0f}lux  UV Index: {:.1f}".format(light_lux, uv_index))
+            result['wind_gust_meter_sec'] = wind_gust
+            result['wind_avg_meter_sec'] = wind_avg
+            result['wind_direction_deg'] = float(wdir)
+            result['light_lux'] = light_lux
+            result['uv_index'] = uv_index
         
         # 8-in-1 sensor has globe temperature
         if stype == SENSOR_TYPE_WEATHER8:
             if (msgw[23] >> 4) < 10:
                 tglobe_c = (msgw[22] >> 4) * 10 + (msgw[22] & 0x0f) + (msgw[23] >> 4) * 0.1
-                print("  Globe Temperature: {:.1f}°C".format(tglobe_c))
+                result['globe_temp_c'] = tglobe_c
     
     elif stype == SENSOR_TYPE_AIR_PM:
         # Air Quality (Particulate Matter) sensor
         pm_1_0 = (msgw[8] & 0x0f) * 1000 + (msgw[9] >> 4) * 100 + (msgw[9] & 0x0f) * 10 + (msgw[10] >> 4)
         pm_2_5 = (msgw[10] & 0x0f) * 1000 + (msgw[11] >> 4) * 100 + (msgw[11] & 0x0f) * 10 + (msgw[12] >> 4)
         pm_10 = (msgw[12] & 0x0f) * 1000 + (msgw[13] >> 4) * 100 + (msgw[13] & 0x0f) * 10 + (msgw[14] >> 4)
-        print("  PM1.0: {:d} µg/m³  PM2.5: {:d} µg/m³  PM10: {:d} µg/m³".format(pm_1_0, pm_2_5, pm_10))
+        result['pm_1_0'] = pm_1_0
+        result['pm_2_5'] = pm_2_5
+        result['pm_10'] = pm_10
     
     elif stype == SENSOR_TYPE_CO2:
         # CO2 sensor
         co2_ppm = ((msgw[4] & 0xf0) >> 4) * 1000 + (msgw[4] & 0x0f) * 100 + \
                   ((msgw[5] & 0xf0) >> 4) * 10 + (msgw[5] & 0x0f)
-        print("  CO2: {:d} ppm".format(co2_ppm))
+        result['co2_ppm'] = co2_ppm
     
     elif stype == SENSOR_TYPE_HCHO_VOC:
         # HCHO/VOC sensor
         hcho_ppb = ((msgw[4] & 0xf0) >> 4) * 1000 + (msgw[4] & 0x0f) * 100 + \
                    ((msgw[5] & 0xf0) >> 4) * 10 + (msgw[5] & 0x0f)
         voc_level = msgw[22] & 0x0f
-        print("  HCHO: {:d} ppb  VOC Level: {:d}".format(hcho_ppb, voc_level))
+        result['hcho_ppb'] = hcho_ppb
+        result['voc_level'] = voc_level
     
-    return DECODE_OK
+    return (DECODE_OK, result)
 
 
 #
@@ -538,28 +593,33 @@ def decodeBresser7In1Payload(msg, msgSize):
 # Based on rtl_433 implementation:
 # https://github.com/merbanan/rtl_433/issues/2140
 #
-def decodeBresserLightningPayload(msg, msgSize):
+def decodeBresserLightningPayload(msg, _msgSize):
     """
     Decode Bresser Lightning sensor payload.
     
     The data has a whitening of 0xaa.
     LFSR-16 digest, generator 0x8810 key 0xabf9 with a final xor 0x899e
+    
+    Returns:
+        tuple: (status_code, data_dict or None)
+            status_code: DECODE_OK or DECODE_DIG_ERR
+            data_dict: Dictionary with decoded data if successful, None otherwise
     """
     # Extract sensor type and startup from RAW data (before de-whitening)
     stype = msg[6] >> 4
     startup = (msg[6] & 0x8) == 0x00
     
     # Data de-whitening
-    msgw = bytearray(msgSize)
-    for i in range(msgSize):
+    msgw = bytearray(_msgSize)
+    for i in range(_msgSize):
         msgw[i] = msg[i] ^ 0xaa
     
     # LFSR-16 digest, generator 0x8810 key 0xabf9 with a final xor 0x899e
     chk = (msgw[0] << 8) | msgw[1]
     digest = lfsr_digest16(msgw[2:], 8, 0x8810, 0xabf9)
     if ((chk ^ digest) != 0x899e):
-        print("Digest check failed - [0x{:04X}] vs [0x{:04X}] (0x{:04X})".format(chk, digest, chk ^ digest))
-        return DECODE_DIG_ERR
+        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chk:04X}] vs [0x{digest:04X}] (0x{chk ^ digest:04X})")
+        return (DECODE_DIG_ERR, None)
     
     sid = (msgw[2] << 8) | msgw[3]
     
@@ -569,11 +629,16 @@ def decodeBresserLightningPayload(msg, msgSize):
     batt_ok = not ((msgw[5] & 0x08) == 0x00)
     distance_km = msgw[7]
     
-    print("ID: 0x{:04x}  Type: {:d}  Battery: {}  Startup: {}".format(
-        sid, stype, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
-    print("  Strike Count: {:d}  Distance: {:d} km".format(strike_count, distance_km))
+    result = {
+        'sensor_id': sid,
+        'sensor_type': stype,
+        'battery_ok': batt_ok,
+        'startup': startup,
+        'strike_count': strike_count,
+        'distance_km': distance_km
+    }
     
-    return DECODE_OK
+    return (DECODE_OK, result)
 
 
 #
@@ -582,11 +647,16 @@ def decodeBresserLightningPayload(msg, msgSize):
 # Based on implementation:
 # https://github.com/matthias-bs/BresserWeatherSensorReceiver/issues/77
 #
-def decodeBresserLeakagePayload(msg, msgSize):
+def decodeBresserLeakagePayload(msg, _msgSize):
     """
     Decode Bresser Water Leakage sensor payload.
     
     Uses CRC16/XMODEM for validation.
+    
+    Returns:
+        tuple: (status_code, data_dict or None)
+            status_code: DECODE_OK, DECODE_CHK_ERR, or DECODE_INVALID
+            data_dict: Dictionary with decoded data if successful, None otherwise
     """
     SENSOR_TYPE_LEAKAGE = 5
     
@@ -594,8 +664,8 @@ def decodeBresserLeakagePayload(msg, msgSize):
     crc_act = crc16(msg[2:], 5, 0x1021, 0x0000)
     crc_exp = (msg[0] << 8) | msg[1]
     if crc_act != crc_exp:
-        print("CRC16 check failed - [0x{:04X}] vs [0x{:04X}]".format(crc_act, crc_exp))
-        return DECODE_CHK_ERR
+        log_message(LOG_LEVEL_ERROR, f"CRC16 check failed - [0x{crc_act:04X}] vs [0x{crc_exp:04X}]")
+        return (DECODE_CHK_ERR, None)
     
     sid = ((msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5])
     stype = msg[6] >> 4
@@ -609,30 +679,130 @@ def decodeBresserLeakagePayload(msg, msgSize):
     # alarm and no_alarm should be opposites (one true, one false)
     # If they're both true or both false, the data is invalid
     if (stype != SENSOR_TYPE_LEAKAGE) or (alarm == no_alarm) or (ch == 0):
-        return DECODE_INVALID
+        return (DECODE_INVALID, None)
     
-    print("ID: 0x{:08x}  Type: {:d}  Channel: {:d}  Battery: {}  Startup: {}".format(
-        sid, stype, ch, "OK" if batt_ok else "Low", "Yes" if startup else "No"))
-    print("  Alarm: {}".format("YES" if (alarm and not no_alarm) else "NO"))
+    result = {
+        'sensor_id': sid,
+        'sensor_type': stype,
+        'channel': ch,
+        'battery_ok': batt_ok,
+        'startup': startup,
+        'alarm': alarm and not no_alarm
+    }
     
-    return DECODE_OK
+    return (DECODE_OK, result)
     
+def print_sensor_data(data):
+    """
+    Print decoded sensor data from a dictionary.
+    
+    Args:
+        data: Dictionary with decoded sensor data
+    """
+    if data is None:
+        return
+    
+    # Print common fields
+    sensor_id = data.get('sensor_id')
+    if sensor_id is not None:
+        if sensor_id <= 0xFF:
+            print(f"ID: 0x{sensor_id:02x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+        elif sensor_id <= 0xFFFF:
+            print(f"ID: 0x{sensor_id:04x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+        else:
+            print(f"ID: 0x{sensor_id:08x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+        
+        if 'channel' in data:
+            print(f"  Channel: {data['channel']}", end='')
+        
+        batt_ok = data.get('battery_ok', False)
+        print(f"  Battery: {'OK' if batt_ok else 'Low'}", end='')
+        
+        startup = data.get('startup', False)
+        print(f"  Startup: {'Yes' if startup else 'No'}")
+    
+    # Print temperature and humidity/moisture
+    if 'moisture' in data:
+        print(f"  Temperature: {data.get('temp_c', 0):.1f}°C  Moisture: {data['moisture']}%")
+    elif 'temp_c' in data and 'humidity' in data:
+        print(f"  Temperature: {data['temp_c']:.1f}°C  Humidity: {data['humidity']}%")
+    elif 'temp_c' in data:
+        print(f"  Temperature: {data['temp_c']:.1f}°C")
+    
+    # Print UV index
+    if 'uv_index' in data:
+        print(f"  UV Index: {data['uv_index']:.1f}")
+    
+    # Print wind data
+    if 'wind_gust_meter_sec' in data:
+        print(f"  Wind: Gust={data['wind_gust_meter_sec']:.1f}m/s  " +
+              f"Avg={data['wind_avg_meter_sec']:.1f}m/s  " +
+              f"Dir={data['wind_direction_deg']:.1f}°")
+    
+    # Print rain
+    if 'rain_mm' in data:
+        print(f"  Rain: {data['rain_mm']:.1f}mm")
+    
+    # Print light and UV for 7-in-1
+    if 'light_lux' in data:
+        print(f"  Light: {data['light_lux']:.0f}lux  UV Index: {data.get('uv_index', 0):.1f}")
+    
+    # Print globe temperature for 8-in-1
+    if 'globe_temp_c' in data:
+        print(f"  Globe Temperature: {data['globe_temp_c']:.1f}°C")
+    
+    # Print air quality data
+    if 'pm_1_0' in data:
+        print(f"  PM1.0: {data['pm_1_0']} µg/m³  " +
+              f"PM2.5: {data['pm_2_5']} µg/m³  " +
+              f"PM10: {data['pm_10']} µg/m³")
+    
+    # Print CO2 data
+    if 'co2_ppm' in data:
+        print(f"  CO2: {data['co2_ppm']} ppm")
+    
+    # Print HCHO/VOC data
+    if 'hcho_ppb' in data:
+        print(f"  HCHO: {data['hcho_ppb']} ppb  VOC Level: {data.get('voc_level', 0)}")
+    
+    # Print lightning data
+    if 'strike_count' in data:
+        print(f"  Strike Count: {data['strike_count']}  Distance: {data['distance_km']} km")
+    
+    # Print leakage alarm
+    if 'alarm' in data:
+        print(f"  Alarm: {'YES' if data['alarm'] else 'NO'}")
+
+
 def main():
+    # Enable all log messages for testing
+    set_log_level(LOG_LEVEL_ERROR)
+    
     print("=== Testing 6-in-1 Decoder ===")
     msg1     = bytes([0xD4, 0x2A, 0xAF, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0xAA, 0xFF, 0x29, 0x28, 0xFF, 0xBB, 0x89, 0xFF, 0x01, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     msg1_err = bytes([0xD4, 0x2A, 0xAF, 0x21, 0x10, 0x34, 0x28, 0x18, 0xFF, 0xAA, 0xFF, 0x29, 0x28, 0xFF, 0xBB, 0x89, 0xFF, 0x01, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     msg2     = bytes([0xD4, 0x54, 0x1B, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0x88, 0xFF, 0x29, 0x28, 0x06, 0x42, 0x87, 0xFF, 0xF0, 0xC6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     msg3     = bytes([0xD4, 0x65, 0xA7, 0x79, 0x28, 0x82, 0xA2, 0x18, 0xFF, 0x66, 0xFF, 0x25, 0x68, 0xFF, 0xEA, 0xBF, 0xFF, 0x01, 0x89, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     recv     = bytes([0xd4, 0x3d, 0x91, 0x39, 0x58, 0x58, 0x23, 0x76, 0x18, 0xff, 0xff, 0xff, 0x31, 0x28, 0x05, 0x16, 0x89, 0xff, 0xf0, 0xd4, 0xaa, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-    decodeBresser6In1Payload(msg1[1:], 26)
+    
+    status, data = decodeBresser6In1Payload(msg1[1:], 26)
+    print_sensor_data(data)
     print()
-    decodeBresser6In1Payload(msg1_err[1:], 26)
+    
+    status, data = decodeBresser6In1Payload(msg1_err[1:], 26)
+    print_sensor_data(data)
     print()
-    decodeBresser6In1Payload(msg2[1:], 26)
+    
+    status, data = decodeBresser6In1Payload(msg2[1:], 26)
+    print_sensor_data(data)
     print()
-    decodeBresser6In1Payload(msg3[1:], 26)
+    
+    status, data = decodeBresser6In1Payload(msg3[1:], 26)
+    print_sensor_data(data)
     print()
-    decodeBresser6In1Payload(recv[1:], 26)
+    
+    status, data = decodeBresser6In1Payload(recv[1:], 26)
+    print_sensor_data(data)
     print()
     
     print("\n=== Testing 5-in-1 Decoder ===")
@@ -642,8 +812,9 @@ def main():
     msg5in1 = bytes([0xD4,  # sync word (excluded from processing)
                      0xEA, 0x7F, 0x5F, 0xC7, 0x8E, 0x33, 0x51, 0xC5, 0xD7, 0xDD, 0xBB, 0xC4, 0xA6,  # First 13 bytes
                      0x15, 0x80, 0xA0, 0x38, 0x71, 0xCC, 0xAE, 0x3A, 0x28, 0x22, 0x44, 0x3B, 0x59]) # Last 13 bytes (inverse)
-    result = decodeBresser5In1Payload(msg5in1[1:], 26)
-    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED (expected with synthetic data)")
+    status, data = decodeBresser5In1Payload(msg5in1[1:], 26)
+    print_sensor_data(data)
+    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED (expected with synthetic data)'}")
     print()
     
     print("\n=== Testing 7-in-1 Decoder ===")
@@ -655,8 +826,9 @@ def main():
                      0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                      0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                      0xAA, 0xAA])
-    result = decodeBresser7In1Payload(msg7in1[1:], 26)
-    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED (expected with placeholder data)")
+    status, data = decodeBresser7In1Payload(msg7in1[1:], 26)
+    print_sensor_data(data)
+    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED (expected with placeholder data)'}")
     print()
     
     print("\n=== Testing Lightning Decoder ===")
@@ -666,8 +838,9 @@ def main():
                            0xAA, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                            0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
                            0xFF, 0xFF])
-    result = decodeBresserLightningPayload(msg_lightning[1:], 26)
-    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED")
+    status, data = decodeBresserLightningPayload(msg_lightning[1:], 26)
+    print_sensor_data(data)
+    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED'}")
     print()
     
     print("\n=== Testing Leakage Decoder ===")
@@ -677,8 +850,9 @@ def main():
                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                       0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                       0xFF, 0xFF])
-    result = decodeBresserLeakagePayload(msg_leak[1:], 26)
-    print("Result:", "DECODE_OK" if result == DECODE_OK else "DECODE_FAILED")
+    status, data = decodeBresserLeakagePayload(msg_leak[1:], 26)
+    print_sensor_data(data)
+    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED'}")
     print()
 
 if __name__ == "__main__":
