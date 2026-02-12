@@ -338,9 +338,10 @@ class BresserDecoder:
                 status_code: DECODE_OK, DECODE_PAR_ERR, or DECODE_CHK_ERR
                 data_dict: Dictionary with decoded data if successful, None otherwise
         """
-        # First 13 bytes need to match inverse of last 13 bytes
-        for col in range(msgSize // 2):
-            if (msg[col] ^ msg[col + 13]) != 0xff:
+        # First half of the bytes need to match inverse of the second half
+        half = msgSize // 2
+        for col in range(half):
+            if (msg[col] ^ msg[col + half]) != 0xff:
                 log_message(LOG_LEVEL_WARNING, f"Parity wrong at column {col}")
                 return (DECODE_PAR_ERR, None)
         
