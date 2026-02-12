@@ -2,7 +2,7 @@
 #
 # https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver
 #
-from time import sleep_ms
+from time import sleep_ms # pylint: disable=no-name-in-module
 import config
 from cc1101 import CC1101
 from BresserDecoder import (
