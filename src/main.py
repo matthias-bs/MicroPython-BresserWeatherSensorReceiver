@@ -7,9 +7,10 @@ import config
 from cc1101 import CC1101
 from BresserDecoder import (
     DECODE_INVALID, DECODE_OK, DECODE_SKIP,
-    LOG_LEVEL_ERROR, LOG_LEVEL_DEBUG, set_log_level, log_level,
+    LOG_LEVEL_ERROR, LOG_LEVEL_DEBUG, set_log_level,
     BresserDecoder
 )
+import BresserDecoder as BD
 
 
 def print_sensor_data(data):
@@ -141,7 +142,7 @@ def init_cc1101():
     """
     cc1101 = CC1101(config.SPI_ID, config.SS_PIN, config.GDO0_PIN, config.GDO2_PIN)
 
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         # Read status byte
         status = cc1101.write_command(CC1101.SNOP)
         print("Status byte", hex(status), bin(status))
@@ -152,47 +153,47 @@ def init_cc1101():
     
     # Configuration
     state = cc1101.config()
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("config():", state)
     
     state = cc1101.setFrequency(868.3)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setFrequency():", state)
     
     state = cc1101.setBitRate(8.21)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setBitrate():", state)
     
     state = cc1101.setRxBandwidth(270.0)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setRxBandwidth():", state)
     
     state = cc1101.setFrequencyDeviation(57.136417)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setFrequencyDeviation():", state)
     
     state = cc1101.setOutputPower(10)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setOutputPower():", state)
     
     state = cc1101.setPreambleLength(32)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setPreambleLength():", state)
     
     state = cc1101.setCrcFiltering(False)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setCrcFiltering():", state)
     
     state = cc1101.fixedPacketLengthMode(27)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("fixedPacketLengthMode():", state)
     
     state = cc1101.setSyncWord(0xAA, 0x2D, 0, False)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         print("setSyncWord():", state)
     
     # Read all configuration registers (for debugging)
-    if log_level >= LOG_LEVEL_DEBUG:
+    if BD.log_level >= LOG_LEVEL_DEBUG:
         read_all_registers(cc1101)
     
     return cc1101
