@@ -1,7 +1,44 @@
-# Bresser Weather Sensor Decoder Test
+"""MicroPython Bresser Weather Sensor Receiver"""
+###################################################################################################
+# main.py
 #
-# https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver
+# Bresser Weather Sensor Receiver
 #
+# CC1101 radio chip initialization and sensor message reception/decoding loop
+#
+# Based on:
+# - Bresser5in1-CC1101 by Sean Siford (https://github.com/seaniefs/Bresser5in1-CC1101)
+# - RadioLib by Jan Gromeš (https://github.com/jgromes/RadioLib)
+# - rtl433 by Benjamin Larsson (https://github.com/merbanan/rtl_433)
+# - BresserWeatherSensorReceiver (https://github.com/matthias-bs/BresserWeatherSensorReceiver)
+#
+# created: 02/2026
+#
+# MIT License
+#
+# Copyright (c) 2026 Matthias Prinke
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+#
+###################################################################################################
+
+
 from time import sleep_ms # pylint: disable=no-name-in-module
 import config
 from cc1101 import CC1101
