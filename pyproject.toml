@@ -12,10 +12,10 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
-    {name = "Matthias Prinke", email = "info@matthias-prinke.de"}
+    {name = "Matthias Prinke", email = "matthias-bs@web.de"}
 ]
 maintainers = [
-    {name = "Matthias Prinke", email = "info@matthias-prinke.de"}
+    {name = "Matthias Prinke", email = "matthias-bs@web.de"}
 ]
 keywords = [
     "micropython",
