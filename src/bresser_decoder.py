@@ -40,7 +40,7 @@ class BresserDecoder:
     including 5-in-1, 6-in-1, 7-in-1, Lightning, and Leakage sensors.
     """
     
-    MOISTURE_MAP = [0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 99]
+    _MOISTURE_MAP = [0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 99]
     
     @staticmethod
     def lfsr_digest16(message, num_bytes, gen, key):
@@ -293,7 +293,7 @@ class BresserDecoder:
         if stype == SENSOR_TYPE_SOIL and temp_ok and humidity >= 1 and humidity <= 16:
             moisture_ok = True
             humidity_ok = False
-            moisture = BresserDecoder.MOISTURE_MAP[humidity - 1]
+            moisture = BresserDecoder._MOISTURE_MAP[humidity - 1]
         
         # Build result dictionary
         result = {
