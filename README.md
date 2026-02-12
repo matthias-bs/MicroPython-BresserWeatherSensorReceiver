@@ -21,9 +21,9 @@ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 ## Supported Bresser Sensor Protocols
 
 * **6-in-1 Decoder**
-  * Supports weather stations (temperature, humidity, UV, wind, rain)
-  * Supports soil moisture sensors
-  * Supports pool/spa thermometers
+  * 6-in-1 weather sensors (temperature, humidity, UV, wind, rain)
+  * Soil moisture/temperature sensors
+  * Pool/spa thermometer
     
 * **5-in-1 Decoder**
   * 5-in-1 weather sensors
