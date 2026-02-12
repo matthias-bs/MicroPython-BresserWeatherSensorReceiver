@@ -1,3 +1,8 @@
+[![formatting: pylint](https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/actions/workflows/pylint.yml/badge.svg)](https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/actions/workflows/pylint.yml)
+[![pytest](https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/actions/workflows/pytest.yml/badge.svg)](https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/actions/workflows/pytest.yml)
+[![GitHub release](https://img.shields.io/github/release/matthias-bs/MicroPython-BresserWeatherSensorReceiver?maxAge=3600)](https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green)](https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/blob/main/LICENSE)
+
 # MicroPython-BresserWeatherSensorReceiver
 Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython using [Texas Instruments CC1101](https://www.ti.com/product/CC1101)
 
