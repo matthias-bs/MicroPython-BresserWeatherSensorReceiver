@@ -1,41 +1,45 @@
 # MicroPython-BresserWeatherSensorReceiver
 Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython
 
-Work in progress...
+## Example Console Output
 
-Current status:
-* CC1101 initialization :heavy_check_mark:
+```
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+--- RSSI: -82.0 dBm ---
+TTTTTTTTTTTTTTTTT
+--- RSSI: -72.5 dBm ---
+Soil Moisture Sensor: ID: 0x52828827  Type: 4  Channel: 1  Battery: OK  Startup: No
+  Temperature: 24.5°C  Moisture: 0%
+TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
+```
 
-* Radio Message Reception :heavy_check_mark:
+* Each 'T' marks a message reception timeout
+* RSSI: Received Signal Strength Indicator
+* Common sensor data and sensor type specific measurement values
+* Just an RSSI (Received Signal Strength Indicator) value without subsequent data indicates an unknown or invalid message
 
-* Protocol Decoders:
-  * **6-in-1 Decoder** :heavy_check_mark: -- Fully ported from [rtl_433](https://github.com/merbanan/rtl_433)
-    * Supports weather stations (temperature, humidity, UV, wind, rain)
-    * Supports soil moisture sensors
-    * Supports pool/spa thermometers
-    * Includes LFSR-16 digest validation
-    * Tested with sample payloads
-    
-  * **5-in-1 Decoder** :heavy_check_mark: -- Fully ported from [rtl_433](https://github.com/merbanan/rtl_433)
-    * Supports Bresser 5-in-1 weather sensors
-    * Supports Bresser Professional Rain Gauge
-    * Includes parity and checksum validation
-    
-  * **7-in-1 Decoder** :heavy_check_mark: -- Fully ported from [rtl_433](https://github.com/merbanan/rtl_433)
-    * Supports Bresser 7-in-1/8-in-1 weather sensors
-    * Supports Air Quality (PM) sensors
-    * Supports CO2 sensors
-    * Supports HCHO/VOC sensors
-    * Includes data de-whitening and LFSR-16 digest validation
-    
-  * **Lightning Sensor Decoder** :heavy_check_mark: -- Fully ported
-    * Supports Bresser Lightning sensor
-    * Includes data de-whitening and LFSR-16 digest validation
-    * Tested with sample payloads
-    
-  * **Leakage Sensor Decoder** :heavy_check_mark: -- Fully ported
-    * Supports Bresser Water Leakage sensor
-    * Includes CRC16/XMODEM validation
-    * Tested with sample payloads
+## Supported Bresser Sensor Protocols
 
-* **Sequential Decoder Fallback** :heavy_check_mark: -- main.py tries all decoders in sequence until one succeeds
+* **6-in-1 Decoder**
+  * Supports weather stations (temperature, humidity, UV, wind, rain)
+  * Supports soil moisture sensors
+  * Supports pool/spa thermometers
+    
+* **5-in-1 Decoder**
+  * 5-in-1 weather sensors
+  * Professional Rain Gauge
+    
+* **7-in-1 Decoder**
+  * 7-in-1/8-in-1 weather sensors
+  * Air Quality (PM) sensor
+  * CO2 sensor
+  * HCHO/VOC sensor
+    
+* **Lightning Sensor Decoder**
+  * Lightning sensor
+    
+* **Leakage Sensor Decoder** :heavy_check_mark: -- Fully ported
+  * Water Leakage sensor
+
+
+**Sequential Decoder Fallback** -- main.py tries all decoders in sequence until one succeeds
