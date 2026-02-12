@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "micropython-bresser-weather-sensor-receiver"
+version = "0.1.0"
+description = "Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython using Texas Instruments CC1101"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Matthias Prinke", email = "info@matthias-prinke.de"}
+]
+maintainers = [
+    {name = "Matthias Prinke", email = "info@matthias-prinke.de"}
+]
+keywords = [
+    "micropython",
+    "bresser",
+    "weather-sensor",
+    "cc1101",
+    "esp32",
+    "radio-receiver",
+    "868mhz"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: MicroPython",
+    "Topic :: Software Development :: Embedded Systems",
+    "Topic :: Home Automation",
+    "Topic :: System :: Hardware"
+]
+
+[project.urls]
+Homepage = "https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver"
+Repository = "https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver"
+Issues = "https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/issues"
+Documentation = "https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver/blob/main/README.md"
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0"
+]
+dev = [
+    "pylint",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+py-modules = ["BresserDecoder", "cc1101", "config", "main"]
