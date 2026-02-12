@@ -9,7 +9,8 @@ from bresser_decoder import (
     DECODE_INVALID, DECODE_OK, DECODE_SKIP,
     LOG_LEVEL_ERROR, set_log_level,
     decodeBresser6In1Payload, decodeBresser5In1Payload, decodeBresser7In1Payload,
-    decodeBresserLightningPayload, decodeBresserLeakagePayload
+    decodeBresserLightningPayload, decodeBresserLeakagePayload,
+    get_sensor_type_name
 )
 
 
@@ -25,13 +26,18 @@ def print_sensor_data(data):
     
     # Print common fields
     sensor_id = data.get('sensor_id')
+    sensor_type = data.get('sensor_type')
     if sensor_id is not None:
+        # Prepend sensor type name
+        sensor_type_name = get_sensor_type_name(sensor_type)
+        print(f"{sensor_type_name}: ", end='')
+        
         if sensor_id <= 0xFF:
-            print(f"ID: 0x{sensor_id:02x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+            print(f"ID: 0x{sensor_id:02x}  Type: {sensor_type if sensor_type is not None else 'N/A'}", end='')
         elif sensor_id <= 0xFFFF:
-            print(f"ID: 0x{sensor_id:04x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+            print(f"ID: 0x{sensor_id:04x}  Type: {sensor_type if sensor_type is not None else 'N/A'}", end='')
         else:
-            print(f"ID: 0x{sensor_id:08x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+            print(f"ID: 0x{sensor_id:08x}  Type: {sensor_type if sensor_type is not None else 'N/A'}", end='')
         
         if 'channel' in data:
             print(f"  Channel: {data['channel']}", end='')
