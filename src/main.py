@@ -132,12 +132,9 @@ def read_all_registers(cc1101):
         log_message(LOG_LEVEL_DEBUG, f"{name} {hex(cc1101.read_register(addr))}")
 
 
-def init_cc1101(log_level=LOG_LEVEL_ERROR):
+def init_cc1101():
     """
     Initialize and configure CC1101 radio module.
-    
-    Args:
-        log_level: Log level for debug output (default: LOG_LEVEL_ERROR)
     
     Returns:
         CC1101: Configured CC1101 instance
