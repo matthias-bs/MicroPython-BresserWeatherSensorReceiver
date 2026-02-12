@@ -771,7 +771,8 @@ def _print_test_sensor_data(data):
     
     # Print leakage alarm
     if 'alarm' in data:
-        print(f"  Alarm: {'YES' if data['alarm'] else 'NO'}")
+        alarm_status = "YES" if data["alarm"] else "NO"
+        print(f"  Alarm: {alarm_status}")
 
 
 def main():
