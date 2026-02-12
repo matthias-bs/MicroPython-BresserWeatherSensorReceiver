@@ -692,9 +692,10 @@ def decodeBresserLeakagePayload(msg, _msgSize):
     
     return (DECODE_OK, result)
     
-def print_sensor_data(data):
+def _print_test_sensor_data(data):
     """
-    Print decoded sensor data from a dictionary.
+    Simplified print function for test purposes only.
+    For production use, import print_sensor_data from main.py.
     
     Args:
         data: Dictionary with decoded sensor data
@@ -729,8 +730,8 @@ def print_sensor_data(data):
     elif 'temp_c' in data:
         print(f"  Temperature: {data['temp_c']:.1f}°C")
     
-    # Print UV index
-    if 'uv_index' in data:
+    # Print UV index (only if not part of 7-in-1 with light)
+    if 'uv_index' in data and 'light_lux' not in data:
         print(f"  UV Index: {data['uv_index']:.1f}")
     
     # Print wind data
@@ -786,23 +787,23 @@ def main():
     recv     = bytes([0xd4, 0x3d, 0x91, 0x39, 0x58, 0x58, 0x23, 0x76, 0x18, 0xff, 0xff, 0xff, 0x31, 0x28, 0x05, 0x16, 0x89, 0xff, 0xf0, 0xd4, 0xaa, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     
     status, data = decodeBresser6In1Payload(msg1[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print()
     
     status, data = decodeBresser6In1Payload(msg1_err[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print()
     
     status, data = decodeBresser6In1Payload(msg2[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print()
     
     status, data = decodeBresser6In1Payload(msg3[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print()
     
     status, data = decodeBresser6In1Payload(recv[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print()
     
     print("\n=== Testing 5-in-1 Decoder ===")
@@ -813,7 +814,7 @@ def main():
                      0xEA, 0x7F, 0x5F, 0xC7, 0x8E, 0x33, 0x51, 0xC5, 0xD7, 0xDD, 0xBB, 0xC4, 0xA6,  # First 13 bytes
                      0x15, 0x80, 0xA0, 0x38, 0x71, 0xCC, 0xAE, 0x3A, 0x28, 0x22, 0x44, 0x3B, 0x59]) # Last 13 bytes (inverse)
     status, data = decodeBresser5In1Payload(msg5in1[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED (expected with synthetic data)'}")
     print()
     
@@ -827,7 +828,7 @@ def main():
                      0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
                      0xAA, 0xAA])
     status, data = decodeBresser7In1Payload(msg7in1[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED (expected with placeholder data)'}")
     print()
     
@@ -839,7 +840,7 @@ def main():
                            0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
                            0xFF, 0xFF])
     status, data = decodeBresserLightningPayload(msg_lightning[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED'}")
     print()
     
@@ -851,7 +852,7 @@ def main():
                       0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                       0xFF, 0xFF])
     status, data = decodeBresserLeakagePayload(msg_leak[1:], 26)
-    print_sensor_data(data)
+    _print_test_sensor_data(data)
     print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED'}")
     print()
 
