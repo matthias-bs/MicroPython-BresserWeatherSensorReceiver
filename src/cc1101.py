@@ -12,7 +12,7 @@
 import time
 
 # MicroPython specific imports unknown to pylint
-from time import sleep_ms # pylint: disable=no-name-in-module
+from time import sleep_ms, sleep_us # pylint: disable=no-name-in-module
 from machine import SPI, Pin # pylint: disable=import-error
 from micropython import const # pylint: disable=import-error
 
@@ -754,9 +754,9 @@ class CC1101:
 #            
 #        else:
 #            return CC1101.ERR_INVALID_OUTPUT_POWER
-
-        # store the value
-        self._power = power
+#
+#        # store the value
+#        self._power = power
 
         # FIXME
         if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
@@ -1011,6 +1011,7 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
 
 
 
