@@ -2,7 +2,7 @@
 #
 # https://github.com/matthias-bs/MicroPython-BresserWeatherSensorReceiver
 #
-from time import sleep, sleep_ms
+from time import sleep_ms
 import config
 from cc1101 import CC1101
 from bresser_decoder import (
