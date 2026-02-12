@@ -63,7 +63,7 @@ graph LR
 * **Lightning Sensor Decoder**
   * Lightning sensor
     
-* **Leakage Sensor Decoder** :heavy_check_mark: -- Fully ported
+* **Leakage Sensor Decoder**
   * Water Leakage sensor
 
 
