@@ -16,7 +16,7 @@ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 * Each 'T' marks a message reception timeout
 * RSSI: Received Signal Strength Indicator
 * Common sensor data and sensor type specific measurement values
-* Just an RSSI (Received Signal Strength Indicator) value without subsequent data indicates an unknown or invalid message
+* Only an RSSI value without subsequent data: unknown or invalid message (message integrity check failed)
 
 ## Supported Bresser Sensor Protocols
 
