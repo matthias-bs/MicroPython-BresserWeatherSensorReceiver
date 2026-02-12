@@ -12,7 +12,7 @@
 import time
 
 # MicroPython specific imports unknown to pylint
-from time import sleep_ms, sleep_us, ticks_us # pylint: disable=no-name-in-module
+from time import sleep_ms, sleep_us, ticks_us, ticks_ms # pylint: disable=no-name-in-module
 from machine import SPI, Pin # pylint: disable=import-error
 from micropython import const # pylint: disable=import-error
 
@@ -490,13 +490,13 @@ class CC1101:
 
         bytesInFIFO = self.SPIgetRegValue(CC1101.RXBYTES, 6, 0)
         readBytes = 0
-        lastPop = time.ticks_ms()
+        lastPop = ticks_ms()
 
         data = []
         # keep reading from FIFO until we get all the packet.
         while readBytes < _length:
             if bytesInFIFO == 0:
-                if (time.ticks_ms() - lastPop) > 5:
+                if (ticks_ms() - lastPop) > 5:
                     # readData was required to read a packet longer than the one received.
                     #RADIOLIB_DEBUG_PRINTLN(F("No data for more than 5mS. Stop here."));
                     break
@@ -512,7 +512,7 @@ class CC1101:
             #readBytes += bytesToRead
             data.append(self.read_register(CC1101.RXFIFO))
             readBytes += 1
-            lastPop = time.ticks_ms()
+            lastPop = ticks_ms()
 
             # Get how many bytes are left in FIFO.
             bytesInFIFO = self.SPIgetRegValue(CC1101.RXBYTES, 6, 0)
@@ -757,24 +757,23 @@ class CC1101:
 #
 #        # store the value
 #        self._power = power
-
-        # FIXME
-        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
-            # Amplitude modulation:
-            # PA_TABLE[0] is the power to be used when transmitting a 0  (no power)
-            # PA_TABLE[1] is the power to be used when transmitting a 1  (full power)
-
-            # FIXME
-            # paValues = [0x00, powerRaw]
-            # SPIwriteRegisterBurst(RADIOLIB_CC1101_REG_PATABLE, paValues, 2);
-            return CC1101.ERR_NONE
-
-        else:
-            # Freq modulation:
-            # PA_TABLE[0] is the power to be used when transmitting.
-            # FIXME
-            #return(SPIsetRegValue(RADIOLIB_CC1101_REG_PATABLE, powerRaw));
-            pass
+#
+#        # FIXME
+#        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
+#            # Amplitude modulation:
+#            # PA_TABLE[0] is the power to be used when transmitting a 0  (no power)
+#            # PA_TABLE[1] is the power to be used when transmitting a 1  (full power)
+#
+#            # FIXME
+#            # paValues = [0x00, powerRaw]
+#            # SPIwriteRegisterBurst(RADIOLIB_CC1101_REG_PATABLE, paValues, 2);
+#            return CC1101.ERR_NONE
+#
+#        else:
+#            # Freq modulation:
+#            # PA_TABLE[0] is the power to be used when transmitting.
+#            # FIXME
+#            #return(SPIsetRegValue(RADIOLIB_CC1101_REG_PATABLE, powerRaw));
 
     def setBitRate(self, br):
         # RADIOLIB_CHECK_RANGE(br, 0.025, 600.0, RADIOLIB_ERR_INVALID_BIT_RATE);
@@ -1011,6 +1010,7 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
 
 
 
