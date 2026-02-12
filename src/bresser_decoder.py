@@ -243,7 +243,6 @@ def decodeBresser6In1Payload(msg, _msgSize):
     wind_avg = 0.0
     wind_dir = 0.0
     moisture = 0
-    rain_mm = 0.0
     
     # Check for 3-in-1 Professional Wind Gauge
     # Temperature below -50°C indicates incorrect sign bit interpretation
