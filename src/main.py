@@ -109,19 +109,7 @@ def getMessage():
     #     4. flush RX buffer
     #     5. switch to standby
     (rcvState, data) = cc1101.receive(27)
-    #print("\nData:  ", data)
-    #rssi  = cc1101.getRSSI()
-    #print("RSSI:  ", rssi)
     recvData = []
-    
-#    if len(data) > 0:
-#        recvData = [int.from_bytes(data[0][i:i+1], "little") for i in range(len(data[0]))]
-    #if len(data) > 0:
-    #    recvData = [int.from_bytes(data[0][i:i+1], "little") for i in range(len(data))]
-    
-    #print("recvData: ", recvData)
-    #if len(recvData) > 0:
-    #    print("\n[{}]".format(' '.join(hex(x) for x in recvData)))
     
     recvData = data
     if rcvState == CC1101.ERR_NONE:
