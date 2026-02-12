@@ -12,7 +12,7 @@
 import time
 
 # MicroPython specific imports unknown to pylint
-from time import sleep_ms, sleep_us # pylint: disable=no-name-in-module
+from time import sleep_ms, sleep_us, ticks_us # pylint: disable=no-name-in-module
 from machine import SPI, Pin # pylint: disable=import-error
 from micropython import const # pylint: disable=import-error
 
@@ -460,13 +460,13 @@ class CC1101:
         #RADIOLIB_ASSERT(state);
 
         # wait for packet or timeout
-        start = time.ticks_us()
+        start = ticks_us()
         while self.gdo0.value() == 0:
             #machine.idle()
             #sleep_us(10)
             #_mod->yield();
 
-            if (time.ticks_us() - start) > timeout:
+            if (ticks_us() - start) > timeout:
                 self.write_command(CC1101.SIDLE)
                 self.write_command(CC1101.SFRX)
                 return CC1101.ERR_RX_TIMEOUT, []
@@ -1011,6 +1011,7 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
 
 
 
