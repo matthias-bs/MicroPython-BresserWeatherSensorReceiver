@@ -103,6 +103,9 @@ def get_sensor_type_name(sensor_type):
     Returns:
         str: Human-readable sensor type name
     """
+    if sensor_type is None:
+        return "Unknown"
+    
     sensor_type_map = {
         1: "Weather Station",
         3: "Pool/Spa Thermometer",
@@ -114,6 +117,8 @@ def get_sensor_type_name(sensor_type):
         11: "HCHO/VOC Sensor",
         12: "Weather Station (3-in-1)",
         13: "Weather Station (8-in-1)",
+        # Professional Rain Gauge can have sensor types 0x39, 0x3A, or 0x3B
+        # (see bresser_5in1 decoder line 415-417)
         0x39: "Professional Rain Gauge",
         0x3A: "Professional Rain Gauge",
         0x3B: "Professional Rain Gauge"
