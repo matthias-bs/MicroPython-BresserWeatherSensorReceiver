@@ -45,3 +45,8 @@ TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT
 * RSSI: Received Signal Strength Indicator
 * Common sensor data and sensor type specific measurement values
 * Only an RSSI value without subsequent data: unknown or invalid message (message integrity check failed)
+
+
+## Legal
+
+> This project is in no way affiliated with, authorized, maintained, sponsored or endorsed by Bresser GmbH or any of its affiliates or subsidiaries.
