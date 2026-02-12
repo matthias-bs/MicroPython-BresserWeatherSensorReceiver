@@ -813,85 +813,33 @@ def _print_test_sensor_data(data):
 
 
 def main():
-    # Enable error log messages for testing
-    set_log_level(LOG_LEVEL_ERROR)
+    """
+    Simple main function for testing decoder functionality.
+    For comprehensive testing, use pytest with the tests in the tests/ directory.
+    """
+    # Enable warning and error log messages for testing
+    set_log_level(LOG_LEVEL_WARNING)
     
-    print("=== Testing 6-in-1 Decoder ===")
-    msg1     = bytes([0xD4, 0x2A, 0xAF, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0xAA, 0xFF, 0x29, 0x28, 0xFF, 0xBB, 0x89, 0xFF, 0x01, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-    msg1_err = bytes([0xD4, 0x2A, 0xAF, 0x21, 0x10, 0x34, 0x28, 0x18, 0xFF, 0xAA, 0xFF, 0x29, 0x28, 0xFF, 0xBB, 0x89, 0xFF, 0x01, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-    msg2     = bytes([0xD4, 0x54, 0x1B, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0x88, 0xFF, 0x29, 0x28, 0x06, 0x42, 0x87, 0xFF, 0xF0, 0xC6, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-    msg3     = bytes([0xD4, 0x65, 0xA7, 0x79, 0x28, 0x82, 0xA2, 0x18, 0xFF, 0x66, 0xFF, 0x25, 0x68, 0xFF, 0xEA, 0xBF, 0xFF, 0x01, 0x89, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-    recv     = bytes([0xd4, 0x3d, 0x91, 0x39, 0x58, 0x58, 0x23, 0x76, 0x18, 0xff, 0xff, 0xff, 0x31, 0x28, 0x05, 0x16, 0x89, 0xff, 0xf0, 0xd4, 0xaa, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    print("Bresser Weather Sensor Decoder")
+    print("For full test suite, run: pytest tests/")
+    print()
+    print("Running basic decoder test...")
     
-    status, data = decodeBresser6In1Payload(msg1[1:], 26)
-    _print_test_sensor_data(data)
+    # Basic sanity check with 6-in-1 decoder
+    msg_6in1 = bytes([0x54, 0x1B, 0x21, 0x10, 0x34, 0x27, 0x18, 0xFF, 0x88, 0xFF, 
+                     0x29, 0x28, 0x06, 0x42, 0x87, 0xFF, 0xF0, 0xC6, 0x00, 0x00, 
+                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+    
+    print("Testing 6-in-1 Decoder...")
+    status, data = decodeBresser6In1Payload(msg_6in1, 26)
+    if status == DECODE_OK:
+        print("✓ 6-in-1 decoder working")
+    else:
+        print("✗ 6-in-1 decoder test failed")
     print()
     
-    status, data = decodeBresser6In1Payload(msg1_err[1:], 26)
-    _print_test_sensor_data(data)
-    print()
-    
-    status, data = decodeBresser6In1Payload(msg2[1:], 26)
-    _print_test_sensor_data(data)
-    print()
-    
-    status, data = decodeBresser6In1Payload(msg3[1:], 26)
-    _print_test_sensor_data(data)
-    print()
-    
-    status, data = decodeBresser6In1Payload(recv[1:], 26)
-    _print_test_sensor_data(data)
-    print()
-    
-    print("\n=== Testing 5-in-1 Decoder ===")
-    # NOTE: This is synthetic test data for demonstration purposes.
-    # Real test data from rtl_433 or actual sensors would be better for validation.
-    # First 13 bytes and last 13 bytes should be inverse (total payload 26 bytes)
-    msg5in1 = bytes([0xD4,  # sync word (excluded from processing)
-                     0xEA, 0x7F, 0x5F, 0xC7, 0x8E, 0x33, 0x51, 0xC5, 0xD7, 0xDD, 0xBB, 0xC4, 0xA6,  # First 13 bytes
-                     0x15, 0x80, 0xA0, 0x38, 0x71, 0xCC, 0xAE, 0x3A, 0x28, 0x22, 0x44, 0x3B, 0x59]) # Last 13 bytes (inverse)
-    status, data = decodeBresser5In1Payload(msg5in1[1:], 26)
-    _print_test_sensor_data(data)
-    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED (expected with synthetic data)'}")
-    print()
-    
-    print("\n=== Testing 7-in-1 Decoder ===")
-    # NOTE: This is placeholder data for demonstration purposes.
-    # Real test data from rtl_433 test cases would be better for validation.
-    # The 7-in-1 decoder requires proper whitened data with valid digest.
-    msg7in1 = bytes([0xD4,  # sync word
-                     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 
-                     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
-                     0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA,
-                     0xAA, 0xAA])
-    status, data = decodeBresser7In1Payload(msg7in1[1:], 26)
-    _print_test_sensor_data(data)
-    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED (expected with placeholder data)'}")
-    print()
-    
-    print("\n=== Testing Lightning Decoder ===")
-    # Test data from C++ code (with 0xaa whitening applied)
-    msg_lightning = bytes([0xD4,  # sync word
-                           0x73, 0x69, 0xB5, 0x08, 0xAA, 0xA2, 0x90, 0xAA, 
-                           0xAA, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                           0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
-                           0xFF, 0xFF])
-    status, data = decodeBresserLightningPayload(msg_lightning[1:], 26)
-    _print_test_sensor_data(data)
-    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED'}")
-    print()
-    
-    print("\n=== Testing Leakage Decoder ===")
-    # Test data from issue #77 examples
-    msg_leak = bytes([0xD4,  # sync word
-                      0xC7, 0x70, 0x35, 0x97, 0x04, 0x08, 0x57, 0x70,
-                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                      0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-                      0xFF, 0xFF])
-    status, data = decodeBresserLeakagePayload(msg_leak[1:], 26)
-    _print_test_sensor_data(data)
-    print(f"Result: {'DECODE_OK' if status == DECODE_OK else 'DECODE_FAILED'}")
-    print()
+    print("All decoders have comprehensive tests in tests/ directory")
+    print("Run 'pytest tests/' for full test coverage")
 
 if __name__ == "__main__":
     main()
