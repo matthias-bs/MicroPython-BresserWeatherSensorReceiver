@@ -504,8 +504,8 @@ class CC1101:
                     continue
 
             # read the minimum between "remaining length" and bytesInFifo
-            bytesToRead = min((_length - readBytes), bytesInFIFO)
-            # self.SPIreadRegisterBurst(CC1101.FIFO, bytesToRead, &(data[readBytes]));
+            #bytesToRead = min((_length - readBytes), bytesInFIFO)
+            #self.SPIreadRegisterBurst(CC1101.FIFO, bytesToRead, &(data[readBytes]));
             #data.append(self.read_burst(CC1101.RXFIFO_BURST, bytesToRead))
             #readBytes += bytesToRead
             data.append(self.read_register(CC1101.RXFIFO))
@@ -726,32 +726,32 @@ class CC1101:
                    [0xC2, 0xC0, 0xC2, 0xC0]]
 
         # requires Python >=3.10
-        if power == -30:
-            powerRaw = paTable[0][f]
-            
-        elif power == -20:
-            powerRaw = paTable[1][f]
-        
-        elif power == -15:
-            powerRaw = paTable[2][f]
-            
-        elif power == -10:
-            powerRaw = paTable[3][f]
-            
-        elif power == 0:
-            powerRaw = paTable[4][f]
-            
-        elif power == 5:
-            powerRaw = paTable[5][f]
-            
-        elif power == 7:
-            powerRaw = paTable[6][f]
-            
-        elif power == 10:
-            powerRaw = paTable[7][f]
-            
-        else:
-            return CC1101.ERR_INVALID_OUTPUT_POWER
+        #if power == -30:
+        #    powerRaw = paTable[0][f]
+        #    
+        #elif power == -20:
+        #    powerRaw = paTable[1][f]
+        # 
+        #elif power == -15:
+        #    powerRaw = paTable[2][f]
+        #    
+        #elif power == -10:
+        #    powerRaw = paTable[3][f]
+        #    
+        #elif power == 0:
+        #    powerRaw = paTable[4][f]
+        #    
+        #elif power == 5:
+        #    powerRaw = paTable[5][f]
+        #    
+        #elif power == 7:
+        #    powerRaw = paTable[6][f]
+        #    
+        #elif power == 10:
+        #    powerRaw = paTable[7][f]
+        #    
+        #else:
+        #    return CC1101.ERR_INVALID_OUTPUT_POWER
 
         # store the value
         self._power = power
@@ -1009,4 +1009,5 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
 
