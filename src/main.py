@@ -165,8 +165,8 @@ def init_cc1101():
     state = cc1101.setFrequencyDeviation(57.136417)
     log_message(LOG_LEVEL_DEBUG, f"setFrequencyDeviation(): {state}")
     
-    state = cc1101.setOutputPower(10)
-    log_message(LOG_LEVEL_DEBUG, f"setOutputPower(): {state}")
+    #state = cc1101.setOutputPower(10)
+    #log_message(LOG_LEVEL_DEBUG, f"setOutputPower(): {state}")
     
     state = cc1101.setPreambleLength(32)
     log_message(LOG_LEVEL_DEBUG, f"setPreambleLength(): {state}")
