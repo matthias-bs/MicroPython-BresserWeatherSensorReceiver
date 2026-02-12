@@ -7,10 +7,9 @@ import config
 from cc1101 import CC1101
 from BresserDecoder import (
     DECODE_INVALID, DECODE_OK, DECODE_SKIP,
-    LOG_LEVEL_ERROR, LOG_LEVEL_DEBUG, set_log_level,
+    LOG_LEVEL_ERROR, LOG_LEVEL_DEBUG, set_log_level, log_message,
     BresserDecoder
 )
-import BresserDecoder as BD
 
 
 def print_sensor_data(data):
@@ -130,71 +129,62 @@ def read_all_registers(cc1101):
     }
     
     for name, addr in regs.items():
-        print(name, hex(cc1101.read_register(addr)))
+        log_message(LOG_LEVEL_DEBUG, f"{name} {hex(cc1101.read_register(addr))}")
 
 
-def init_cc1101():
+def init_cc1101(log_level=LOG_LEVEL_ERROR):
     """
     Initialize and configure CC1101 radio module.
+    
+    Args:
+        log_level: Log level for debug output (default: LOG_LEVEL_ERROR)
     
     Returns:
         CC1101: Configured CC1101 instance
     """
     cc1101 = CC1101(config.SPI_ID, config.SS_PIN, config.GDO0_PIN, config.GDO2_PIN)
 
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        # Read status byte
-        status = cc1101.write_command(CC1101.SNOP)
-        print("Status byte", hex(status), bin(status))
+    # Read status byte
+    status = cc1101.write_command(CC1101.SNOP)
+    log_message(LOG_LEVEL_DEBUG, f"Status byte {hex(status)} {bin(status)}")
 
-        # Read version
-        version = cc1101.read_register(CC1101.VERSION, CC1101.STATUS_REGISTER)
-        print("VERSION", hex(version))
+    # Read version
+    version = cc1101.read_register(CC1101.VERSION, CC1101.STATUS_REGISTER)
+    log_message(LOG_LEVEL_DEBUG, f"VERSION {hex(version)}")
     
     # Configuration
     state = cc1101.config()
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("config():", state)
+    log_message(LOG_LEVEL_DEBUG, f"config(): {state}")
     
     state = cc1101.setFrequency(868.3)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setFrequency():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setFrequency(): {state}")
     
     state = cc1101.setBitRate(8.21)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setBitrate():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setBitrate(): {state}")
     
     state = cc1101.setRxBandwidth(270.0)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setRxBandwidth():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setRxBandwidth(): {state}")
     
     state = cc1101.setFrequencyDeviation(57.136417)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setFrequencyDeviation():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setFrequencyDeviation(): {state}")
     
     state = cc1101.setOutputPower(10)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setOutputPower():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setOutputPower(): {state}")
     
     state = cc1101.setPreambleLength(32)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setPreambleLength():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setPreambleLength(): {state}")
     
     state = cc1101.setCrcFiltering(False)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setCrcFiltering():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setCrcFiltering(): {state}")
     
     state = cc1101.fixedPacketLengthMode(27)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("fixedPacketLengthMode():", state)
+    log_message(LOG_LEVEL_DEBUG, f"fixedPacketLengthMode(): {state}")
     
     state = cc1101.setSyncWord(0xAA, 0x2D, 0, False)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        print("setSyncWord():", state)
+    log_message(LOG_LEVEL_DEBUG, f"setSyncWord(): {state}")
     
     # Read all configuration registers (for debugging)
-    if BD.log_level >= LOG_LEVEL_DEBUG:
-        read_all_registers(cc1101)
+    read_all_registers(cc1101)
     
     return cc1101
 
