@@ -4,7 +4,7 @@ Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPyth
 Work in progress...
 
 Current status:
-* CC1101 initialization :heavy_check_mark: -- Compared register contents with [BresserWeatherSensorReceiver](https://github.com/matthias-bs/BresserWeatherSensorReceiver)
+* CC1101 initialization :heavy_check_mark:
 
 * Radio Message Reception :heavy_check_mark:
 
