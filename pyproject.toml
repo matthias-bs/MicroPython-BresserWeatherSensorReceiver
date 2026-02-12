@@ -7,6 +7,8 @@ name = "micropython-bresser-weather-sensor-receiver"
 version = "0.1.0"
 description = "Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython using Texas Instruments CC1101"
 readme = "README.md"
+# requires-python specifies the Python version for development/testing tooling,
+# not the MicroPython runtime version on target devices (ESP32)
 requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [
@@ -53,7 +55,8 @@ test = [
 ]
 dev = [
     "pylint>=3.0.0",
-    "micropython-bresser-weather-sensor-receiver[test]"
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0"
 ]
 
 [tool.setuptools]
