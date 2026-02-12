@@ -9,12 +9,10 @@
 # Copyright 2021 (c) Erik de Lange
 # Released under MIT license
 
-import time
-from time import sleep_ms, sleep_us
-
-import machine
-from machine import SPI, Pin
-from micropython import const
+# MicroPython specific imports unknown to pylint 
+from time import sleep_ms, sleep_us # pylint: disable=no-name-in-module
+from machine import SPI, Pin # pylint: disable=import-error
+from micropython import const # pylint: disable=import-error
 
 import config  # hardware dependent configuration
 
@@ -292,8 +290,6 @@ class CC1101:
         self.gdo2 = Pin(gdo2, mode=Pin.IN)
 
         self.deselect()
-#        self.spi = SPI(spi_id, baudrate=8000000, polarity=0, phase=0, bits=8,
-#                       firstbit=SPI.MSB)  # use default pins for mosi, miso and sclk
         self.spi = SPI(spi_id, baudrate=1000000, polarity=0, phase=0, bits=8,
                        firstbit=SPI.MSB)  # use default pins for mosi, miso and sclk
         self.reset()
@@ -1013,3 +1009,4 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
