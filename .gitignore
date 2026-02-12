@@ -8,6 +8,13 @@ __pycache__/
 # MicroPython
 *.mpy
 
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+*.cover
+
 # IDE
 .vscode/
 .idea/
