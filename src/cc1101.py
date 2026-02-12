@@ -9,8 +9,6 @@
 # Copyright 2021 (c) Erik de Lange
 # Released under MIT license
 
-import time
-
 # MicroPython specific imports unknown to pylint
 from time import sleep_ms, sleep_us, ticks_us, ticks_ms # pylint: disable=no-name-in-module
 from machine import SPI, Pin # pylint: disable=import-error
@@ -1010,6 +1008,7 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
 
 
 
