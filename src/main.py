@@ -195,15 +195,12 @@ def getMessage():
     #     3. wait for expected RX packet or timeout [~500us in this configuration]
     #     4. flush RX buffer
     #     5. switch to standby
-    (rcvState, data) = cc1101.receive(27)
-    recvData = []
+    (rcvState, recvData) = cc1101.receive(27)
     
-    recvData = data
     if rcvState == CC1101.ERR_NONE:
         # Verify last syncword is 1st byte of payload (see setSyncWord() above)
         if recvData[0] == 0xD4:
-
-            print(f"[{recvData[0]:02X}] RSSI: {cc1101.getRSSI():0.1f}")
+            print(f"\n--- RSSI: {cc1101.getRSSI():0.1f} ---")
             
             # Try all decoders in sequence until one succeeds
             # Order: 7-in-1, 6-in-1, 5-in-1, Lightning, Leakage
@@ -235,8 +232,7 @@ def getMessage():
         
     return decode_res
 
-
-if __name__ == "__main__":
+def main():
     # Set log level to ERROR (only show errors, not warnings)
     set_log_level(LOG_LEVEL_ERROR)
     
@@ -247,3 +243,6 @@ if __name__ == "__main__":
     while True:
         res = getMessage()
         sleep_ms(10)
+
+if __name__ == "__main__":
+    main()
