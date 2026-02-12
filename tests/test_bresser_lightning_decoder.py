@@ -3,7 +3,7 @@ Unit tests for Bresser Lightning decoder
 """
 # pylint: disable=import-error
 from bresser_decoder import (
-    decodeBresserLightningPayload,
+    BresserDecoder,
     DECODE_OK
 )
 
@@ -18,7 +18,7 @@ class TestBresserLightningDecoder:
                      0xAA, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
                      0xFF, 0xFF])
-        status, data = decodeBresserLightningPayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLightningPayload(msg, 26)
         
         assert status == DECODE_OK
         assert data is not None
@@ -33,7 +33,7 @@ class TestBresserLightningDecoder:
         msg = bytes([0x73, 0x69, 0xB5, 0x08, 0xAA, 0xA2, 0x90, 0xAA, 0xAA, 0xAA, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF])
         
-        status, data = decodeBresserLightningPayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLightningPayload(msg, 26)
         
         # This is real test data from SensorTransmitter with proper whitening and digest
         assert status == DECODE_OK
@@ -46,7 +46,7 @@ class TestBresserLightningDecoder:
     def test_empty_message(self):
         """Test decoding empty message"""
         msg = bytes([0x00] * 26)
-        status, data = decodeBresserLightningPayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLightningPayload(msg, 26)
         
         # Should fail validation
         assert status != DECODE_OK and data is None
@@ -54,7 +54,7 @@ class TestBresserLightningDecoder:
     def test_all_ff_message(self):
         """Test decoding all 0xFF message"""
         msg = bytes([0xFF] * 26)
-        status, data = decodeBresserLightningPayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLightningPayload(msg, 26)
         
         # Should fail validation
         assert status != DECODE_OK and data is None
@@ -65,7 +65,7 @@ class TestBresserLightningDecoder:
                      0xAA, 0xAA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x7F, 0xFF, 0xFF, 0xFF, 0xFF,
                      0xFF, 0xFF])
-        status, data = decodeBresserLightningPayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLightningPayload(msg, 26)
         
         if status == DECODE_OK and data is not None:
             # Check that lightning values are within reasonable ranges

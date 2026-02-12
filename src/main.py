@@ -8,9 +8,7 @@ from cc1101 import CC1101
 from bresser_decoder import (
     DECODE_INVALID, DECODE_OK, DECODE_SKIP,
     LOG_LEVEL_ERROR, set_log_level,
-    decodeBresser6In1Payload, decodeBresser5In1Payload, decodeBresser7In1Payload,
-    decodeBresserLightningPayload, decodeBresserLeakagePayload,
-    get_sensor_type_name
+    BresserDecoder
 )
 
 
@@ -29,7 +27,7 @@ def print_sensor_data(data):
     sensor_type = data.get('sensor_type')
     if sensor_id is not None:
         # Prepend sensor type name
-        sensor_type_name = get_sensor_type_name(sensor_type)
+        sensor_type_name = BresserDecoder.get_sensor_type_name(sensor_type)
         print(f"{sensor_type_name}: ", end='')
         
         if sensor_id <= 0xFF:
@@ -135,11 +133,11 @@ def getMessage():
             # Try all decoders in sequence until one succeeds
             # Order: 7-in-1, 6-in-1, 5-in-1, Lightning, Leakage
             decoders = [
-                decodeBresser7In1Payload,
-                decodeBresser6In1Payload,
-                decodeBresser5In1Payload,
-                decodeBresserLightningPayload,
-                decodeBresserLeakagePayload
+                BresserDecoder.decodeBresser7In1Payload,
+                BresserDecoder.decodeBresser6In1Payload,
+                BresserDecoder.decodeBresser5In1Payload,
+                BresserDecoder.decodeBresserLightningPayload,
+                BresserDecoder.decodeBresserLeakagePayload
             ]
             
             decode_res = DECODE_INVALID

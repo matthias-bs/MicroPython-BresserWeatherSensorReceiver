@@ -3,7 +3,7 @@ Unit tests for Bresser Leakage decoder
 """
 # pylint: disable=import-error
 from bresser_decoder import (
-    decodeBresserLeakagePayload,
+    BresserDecoder,
     DECODE_OK
 )
 
@@ -18,7 +18,7 @@ class TestBresserLeakageDecoder:
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                      0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                      0xFF, 0xFF])
-        status, data = decodeBresserLeakagePayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLeakagePayload(msg, 26)
         
         assert status == DECODE_OK
         assert data is not None
@@ -32,7 +32,7 @@ class TestBresserLeakageDecoder:
         msg = bytes([0xB3, 0xDA, 0x55, 0x57, 0x17, 0x40, 0x53, 0x70, 0x00, 0x00, 0x00, 0x00, 0x00,
                      0x00, 0x00, 0x00, 0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFB])
         
-        status, data = decodeBresserLeakagePayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLeakagePayload(msg, 26)
         
         # This is real test data from SensorTransmitter
         assert status == DECODE_OK
@@ -44,7 +44,7 @@ class TestBresserLeakageDecoder:
     def test_empty_message(self):
         """Test decoding empty message"""
         msg = bytes([0x00] * 26)
-        status, data = decodeBresserLeakagePayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLeakagePayload(msg, 26)
         
         # Should fail validation
         assert status != DECODE_OK and data is None
@@ -52,7 +52,7 @@ class TestBresserLeakageDecoder:
     def test_all_ff_message(self):
         """Test decoding all 0xFF message"""
         msg = bytes([0xFF] * 26)
-        status, data = decodeBresserLeakagePayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLeakagePayload(msg, 26)
         
         # Should fail validation
         assert status != DECODE_OK and data is None
@@ -63,7 +63,7 @@ class TestBresserLeakageDecoder:
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                      0x03, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
                      0xFF, 0xFF])
-        status, data = decodeBresserLeakagePayload(msg, 26)
+        status, data = BresserDecoder.decodeBresserLeakagePayload(msg, 26)
         
         if status == DECODE_OK and data is not None:
             # Check that alarm is a boolean value
