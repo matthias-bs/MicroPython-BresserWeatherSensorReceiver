@@ -210,7 +210,7 @@ def decodeBresser6In1Payload(msg, _msgSize):
     digest  = lfsr_digest16(msg[2:], 15, 0x8810, 0x5412)
 
     if (chkdgst != digest):
-        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chkdgst:04x}] != [0x{digest:04x}]")
+        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chkdgst:04x}] vs [0x{digest:04x}] (0x{chkdgst ^ digest:04x})")
         return (DECODE_DIG_ERR, None)
 
     # Checksum, add with carry
@@ -592,7 +592,7 @@ def decodeBresser7In1Payload(msg, msgSize):
 # Based on rtl_433 implementation:
 # https://github.com/merbanan/rtl_433/issues/2140
 #
-def decodeBresserLightningPayload(msg, _msgSize):
+def decodeBresserLightningPayload(msg, msgSize):
     """
     Decode Bresser Lightning sensor payload.
     
@@ -609,8 +609,8 @@ def decodeBresserLightningPayload(msg, _msgSize):
     startup = (msg[6] & 0x8) == 0x00
     
     # Data de-whitening
-    msgw = bytearray(_msgSize)
-    for i in range(_msgSize):
+    msgw = bytearray(msgSize)
+    for i in range(msgSize):
         msgw[i] = msg[i] ^ 0xaa
     
     # LFSR-16 digest, generator 0x8810 key 0xabf9 with a final xor 0x899e
@@ -775,7 +775,7 @@ def _print_test_sensor_data(data):
 
 
 def main():
-    # Enable all log messages for testing
+    # Enable error log messages for testing
     set_log_level(LOG_LEVEL_ERROR)
     
     print("=== Testing 6-in-1 Decoder ===")
