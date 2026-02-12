@@ -29,7 +29,7 @@ def print_sensor_data(data):
     sensor_type = data.get('sensor_type')
     if sensor_id is not None:
         # Prepend sensor type name
-        sensor_type_name = get_sensor_type_name(sensor_type) if sensor_type is not None else "Unknown"
+        sensor_type_name = get_sensor_type_name(sensor_type)
         print(f"{sensor_type_name}: ", end='')
         
         if sensor_id <= 0xFF:
