@@ -186,7 +186,7 @@ def init_cc1101():
     return cc1101
 
 
-def getMessage():
+def getMessage(cc1101):
     decode_res = DECODE_INVALID
     
     # Receive data
@@ -241,7 +241,7 @@ def main():
     
     # Try to receive and decode sensor data
     while True:
-        res = getMessage()
+        res = getMessage(cc1101)
         sleep_ms(10)
 
 if __name__ == "__main__":
