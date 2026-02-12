@@ -7,7 +7,7 @@ import config
 from cc1101 import CC1101
 from BresserDecoder import (
     DECODE_INVALID, DECODE_OK, DECODE_SKIP,
-    LOG_LEVEL_ERROR, set_log_level,
+    LOG_LEVEL_ERROR, LOG_LEVEL_DEBUG, set_log_level, log_message,
     BresserDecoder
 )
 
@@ -99,6 +99,93 @@ def print_sensor_data(data):
         print(f"  Alarm: {'YES' if data['alarm'] else 'NO'}")
 
 
+def read_all_registers(cc1101):
+    """
+    Read all CC1101 configuration registers for debugging.
+    
+    Args:
+        cc1101: CC1101 instance
+    """
+    regs = {
+        "IOCFG0": CC1101.IOCFG0,
+        "IOCFG1": CC1101.IOCFG1,
+        "IOCFG2": CC1101.IOCFG2,
+        "FREQ0": CC1101.FREQ0,
+        "FREQ1": CC1101.FREQ1,
+        "FREQ2": CC1101.FREQ2,
+        "MDMCFG0": CC1101.MDMCFG0,
+        "MDMCFG1": CC1101.MDMCFG1,
+        "MDMCFG2": CC1101.MDMCFG2,
+        "MDMCFG3": CC1101.MDMCFG3,
+        "MDMCFG4": CC1101.MDMCFG4,
+        "DEVIATN": CC1101.DEVIATN,
+        "PKTCTRL0": CC1101.PKTCTRL0,
+        "PKTCTRL1": CC1101.PKTCTRL1,
+        "PKTLEN": CC1101.PKTLEN,
+        "SYNC0": CC1101.SYNC0,
+        "SYNC1": CC1101.SYNC1,
+        "MCSM0": CC1101.MCSM0,
+        "FIFOTHR": CC1101.FIFOTHR
+    }
+    
+    for name, addr in regs.items():
+        log_message(LOG_LEVEL_DEBUG, f"{name} {hex(cc1101.read_register(addr))}")
+
+
+def init_cc1101():
+    """
+    Initialize and configure CC1101 radio module.
+    
+    Returns:
+        CC1101: Configured CC1101 instance
+    """
+    cc1101 = CC1101(config.SPI_ID, config.SS_PIN, config.GDO0_PIN, config.GDO2_PIN)
+
+    # Read status byte
+    status = cc1101.write_command(CC1101.SNOP)
+    log_message(LOG_LEVEL_DEBUG, f"Status byte {hex(status)} {bin(status)}")
+
+    # Read version
+    version = cc1101.read_register(CC1101.VERSION, CC1101.STATUS_REGISTER)
+    log_message(LOG_LEVEL_DEBUG, f"VERSION {hex(version)}")
+    
+    # Configuration
+    state = cc1101.config()
+    log_message(LOG_LEVEL_DEBUG, f"config(): {state}")
+    
+    state = cc1101.setFrequency(868.3)
+    log_message(LOG_LEVEL_DEBUG, f"setFrequency(): {state}")
+    
+    state = cc1101.setBitRate(8.21)
+    log_message(LOG_LEVEL_DEBUG, f"setBitrate(): {state}")
+    
+    state = cc1101.setRxBandwidth(270.0)
+    log_message(LOG_LEVEL_DEBUG, f"setRxBandwidth(): {state}")
+    
+    state = cc1101.setFrequencyDeviation(57.136417)
+    log_message(LOG_LEVEL_DEBUG, f"setFrequencyDeviation(): {state}")
+    
+    state = cc1101.setOutputPower(10)
+    log_message(LOG_LEVEL_DEBUG, f"setOutputPower(): {state}")
+    
+    state = cc1101.setPreambleLength(32)
+    log_message(LOG_LEVEL_DEBUG, f"setPreambleLength(): {state}")
+    
+    state = cc1101.setCrcFiltering(False)
+    log_message(LOG_LEVEL_DEBUG, f"setCrcFiltering(): {state}")
+    
+    state = cc1101.fixedPacketLengthMode(27)
+    log_message(LOG_LEVEL_DEBUG, f"fixedPacketLengthMode(): {state}")
+    
+    state = cc1101.setSyncWord(0xAA, 0x2D, 0, False)
+    log_message(LOG_LEVEL_DEBUG, f"setSyncWord(): {state}")
+    
+    # Read all configuration registers (for debugging)
+    read_all_registers(cc1101)
+    
+    return cc1101
+
+
 def getMessage():
     decode_res = DECODE_INVALID
     
@@ -153,74 +240,8 @@ if __name__ == "__main__":
     # Set log level to ERROR (only show errors, not warnings)
     set_log_level(LOG_LEVEL_ERROR)
     
-    # Demo the connection to a CC1101 by reading values from the chip
-
-    cc1101 = CC1101(config.SPI_ID, config.SS_PIN, config.GDO0_PIN, config.GDO2_PIN)
-
-    # Read status byte
-    status = cc1101.write_command(CC1101.SNOP)
-    print("Status byte", hex(status), bin(status))
-
-    # Read version
-    version = cc1101.read_register(CC1101.VERSION, CC1101.STATUS_REGISTER)
-    print("VERSION", hex(version))
-    
-    # Configuration
-    state = cc1101.config()
-    print("config():", state)
-    
-    state = cc1101.setFrequency(868.3)
-    print("setFrequency():", state)
-    
-    state = cc1101.setBitRate(8.21)
-    print("setBitrate():", state)
-    
-    state = cc1101.setRxBandwidth(270.0)
-    print("setRxBandwidth():", state)
-    
-    state = cc1101.setFrequencyDeviation(57.136417)
-    print("setFrequencyDeviation():", state)
-    
-    state = cc1101.setOutputPower(10)
-    print("setOutputPower():", state)
-    
-    state = cc1101.setPreambleLength(32)
-    print("setPreambleLength():", state)
-    
-    state = cc1101.setCrcFiltering(False)
-    print("setCrcFiltering():", state)
-    
-    state = cc1101.fixedPacketLengthMode(27)
-    print("fixedPacketLengthMode():", state)
-    
-    state = cc1101.setSyncWord(0xAA, 0x2D, 0, False)
-    print("setSyncWord():", state)
-    
-    # Read all configuration registers (for debugging)
-    regs = {
-        "IOCFG0": CC1101.IOCFG0,
-        "IOCFG1": CC1101.IOCFG1,
-        "IOCFG2": CC1101.IOCFG2,
-        "FREQ0": CC1101.FREQ0,
-        "FREQ1": CC1101.FREQ1,
-        "FREQ2": CC1101.FREQ2,
-        "MDMCFG0": CC1101.MDMCFG0,
-        "MDMCFG1": CC1101.MDMCFG1,
-        "MDMCFG2": CC1101.MDMCFG2,
-        "MDMCFG3": CC1101.MDMCFG3,
-        "MDMCFG4": CC1101.MDMCFG4,
-        "DEVIATN": CC1101.DEVIATN,
-        "PKTCTRL0": CC1101.PKTCTRL0,
-        "PKTCTRL1": CC1101.PKTCTRL1,
-        "PKTLEN": CC1101.PKTLEN,
-        "SYNC0": CC1101.SYNC0,
-        "SYNC1": CC1101.SYNC1,
-        "MCSM0": CC1101.MCSM0,
-        "FIFOTHR": CC1101.FIFOTHR
-    }
-    
-    for name, addr in regs.items():
-        print(name, hex(cc1101.read_register(addr)))
+    # Initialize and configure CC1101
+    cc1101 = init_cc1101()
     
     # Try to receive and decode sensor data
     while True:
