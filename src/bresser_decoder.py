@@ -779,8 +779,8 @@ def main():
     Simple main function for testing decoder functionality.
     For comprehensive testing, use pytest with the tests in the tests/ directory.
     """
-    # Enable error log messages for testing
-    set_log_level(LOG_LEVEL_ERROR)
+    # Enable warning and error log messages for testing
+    set_log_level(LOG_LEVEL_WARNING)
     
     print("Bresser Weather Sensor Decoder")
     print("For full test suite, run: pytest tests/")
