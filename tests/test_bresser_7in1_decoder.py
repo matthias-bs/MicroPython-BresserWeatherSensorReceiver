@@ -2,7 +2,7 @@
 Unit tests for Bresser 7-in-1 decoder
 """
 # pylint: disable=import-error
-from bresser_decoder import (
+from BresserDecoder import (
     BresserDecoder,
     DECODE_OK
 )
