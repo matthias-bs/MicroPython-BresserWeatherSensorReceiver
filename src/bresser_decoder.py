@@ -210,14 +210,14 @@ def decodeBresser6In1Payload(msg, _msgSize):
     digest  = lfsr_digest16(msg[2:], 15, 0x8810, 0x5412)
 
     if (chkdgst != digest):
-        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chkdgst:04x}] vs [0x{digest:04x}] (0x{chkdgst ^ digest:04x})")
+        log_message(LOG_LEVEL_WARNING, f"Digest check failed - [0x{chkdgst:04x}] vs [0x{digest:04x}] (0x{chkdgst ^ digest:04x})")
         return (DECODE_DIG_ERR, None)
 
     # Checksum, add with carry
     # msg[2] to msg[17]
     _sum = add_bytes(msg[2:], 16)
     if ((_sum & 0xff) != 0xff):
-        log_message(LOG_LEVEL_ERROR, "Checksum failed")
+        log_message(LOG_LEVEL_WARNING, "Checksum failed")
         return (DECODE_CHK_ERR, None)
     
     sid   = (msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5]
@@ -366,7 +366,7 @@ def decodeBresser5In1Payload(msg, msgSize):
     # First 13 bytes need to match inverse of last 13 bytes
     for col in range(msgSize // 2):
         if (msg[col] ^ msg[col + 13]) != 0xff:
-            log_message(LOG_LEVEL_ERROR, f"Parity wrong at column {col}")
+            log_message(LOG_LEVEL_WARNING, f"Parity wrong at column {col}")
             return (DECODE_PAR_ERR, None)
     
     # Verify checksum (number bits set in bytes 14-25)
@@ -380,7 +380,7 @@ def decodeBresser5In1Payload(msg, msgSize):
             current_byte >>= 1
     
     if bits_set != expected_bits_set:
-        log_message(LOG_LEVEL_ERROR, f"Checksum wrong - actual [0x{bits_set:02X}] != [0x{expected_bits_set:02X}]")
+        log_message(LOG_LEVEL_WARNING, f"Checksum wrong - actual [0x{bits_set:02X}] != [0x{expected_bits_set:02X}]")
         return (DECODE_CHK_ERR, None)
     
     sid = msg[14]
@@ -496,7 +496,7 @@ def decodeBresser7In1Payload(msg, msgSize):
     chkdgst = (msgw[0] << 8) | msgw[1]
     digest = lfsr_digest16(msgw[2:], 23, 0x8810, 0xba95)
     if (chkdgst ^ digest) != 0x6df1:
-        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chkdgst:04X}] vs [0x{digest:04X}] (0x{chkdgst ^ digest:04X})")
+        log_message(LOG_LEVEL_WARNING, f"Digest check failed - [0x{chkdgst:04X}] vs [0x{digest:04X}] (0x{chkdgst ^ digest:04X})")
         return (DECODE_DIG_ERR, None)
     
     sid = (msgw[2] << 8) | msgw[3]
@@ -616,7 +616,7 @@ def decodeBresserLightningPayload(msg, msgSize):
     chk = (msgw[0] << 8) | msgw[1]
     digest = lfsr_digest16(msgw[2:], 8, 0x8810, 0xabf9)
     if ((chk ^ digest) != 0x899e):
-        log_message(LOG_LEVEL_ERROR, f"Digest check failed - [0x{chk:04X}] vs [0x{digest:04X}] (0x{chk ^ digest:04X})")
+        log_message(LOG_LEVEL_WARNING, f"Digest check failed - [0x{chk:04X}] vs [0x{digest:04X}] (0x{chk ^ digest:04X})")
         return (DECODE_DIG_ERR, None)
     
     sid = (msgw[2] << 8) | msgw[3]
@@ -662,7 +662,7 @@ def decodeBresserLeakagePayload(msg, _msgSize):
     crc_act = crc16(msg[2:], 5, 0x1021, 0x0000)
     crc_exp = (msg[0] << 8) | msg[1]
     if crc_act != crc_exp:
-        log_message(LOG_LEVEL_ERROR, f"CRC16 check failed - [0x{crc_act:04X}] vs [0x{crc_exp:04X}]")
+        log_message(LOG_LEVEL_WARNING, f"CRC16 check failed - [0x{crc_act:04X}] vs [0x{crc_exp:04X}]")
         return (DECODE_CHK_ERR, None)
     
     sid = ((msg[2] << 24) | (msg[3] << 16) | (msg[4] << 8) | msg[5])
