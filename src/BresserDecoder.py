@@ -118,7 +118,7 @@ class BresserDecoder:
         
         for byte_idx in range(num_bytes):
             remainder ^= message[byte_idx] << 8
-            for bit in range(8):
+            for _ in range(8):
                 if remainder & 0x8000:
                     remainder = (remainder << 1) ^ polynomial
                 else:
@@ -797,7 +797,7 @@ def main():
                      0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
     
     print("Testing 6-in-1 Decoder...")
-    status, data = decodeBresser6In1Payload(msg_6in1, 26)
+    status, _data = decodeBresser6In1Payload(msg_6in1, 26)
     if status == DECODE_OK:
         print("✓ 6-in-1 decoder working")
     else:
