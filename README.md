@@ -1,5 +1,5 @@
 # MicroPython-BresserWeatherSensorReceiver
-Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython
+Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython using [Texas Instruments CC1101](https://www.ti.com/product/CC1101)
 
 Tested with [MicroPython](https://micropython.org/) v1.27.0 on ESP32
 
