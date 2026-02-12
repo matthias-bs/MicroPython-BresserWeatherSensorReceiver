@@ -1,13 +1,7 @@
 """
 Unit tests for Bresser Leakage decoder
 """
-import sys
-import os
-
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-# pylint: disable=import-error,wrong-import-position
+# pylint: disable=import-error
 from bresser_decoder import (
     decodeBresserLeakagePayload,
     DECODE_OK
@@ -53,7 +47,7 @@ class TestBresserLeakageDecoder:
         status, data = decodeBresserLeakagePayload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_all_ff_message(self):
         """Test decoding all 0xFF message"""
@@ -61,7 +55,7 @@ class TestBresserLeakageDecoder:
         status, data = decodeBresserLeakagePayload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_leakage_alarm_field(self):
         """Test that leakage alarm field is boolean"""

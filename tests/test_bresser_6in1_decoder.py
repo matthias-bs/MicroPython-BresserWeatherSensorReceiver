@@ -1,13 +1,7 @@
 """
 Unit tests for Bresser 6-in-1 decoder
 """
-import sys
-import os
-
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-# pylint: disable=import-error,wrong-import-position
+# pylint: disable=import-error
 from bresser_decoder import (
     decodeBresser6In1Payload,
     DECODE_OK,
@@ -106,7 +100,7 @@ class TestBresser6In1Decoder:
         status, data = decodeBresser6In1Payload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_all_ff_message(self):
         """Test decoding all 0xFF message"""
@@ -114,4 +108,4 @@ class TestBresser6In1Decoder:
         status, data = decodeBresser6In1Payload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None

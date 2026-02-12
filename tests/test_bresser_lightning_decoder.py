@@ -1,13 +1,7 @@
 """
 Unit tests for Bresser Lightning decoder
 """
-import sys
-import os
-
-# Add src directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-
-# pylint: disable=import-error,wrong-import-position
+# pylint: disable=import-error
 from bresser_decoder import (
     decodeBresserLightningPayload,
     DECODE_OK
@@ -55,7 +49,7 @@ class TestBresserLightningDecoder:
         status, data = decodeBresserLightningPayload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_all_ff_message(self):
         """Test decoding all 0xFF message"""
@@ -63,7 +57,7 @@ class TestBresserLightningDecoder:
         status, data = decodeBresserLightningPayload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_lightning_data_values(self):
         """Test that lightning data values are reasonable"""

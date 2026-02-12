@@ -4,7 +4,9 @@ Unit tests for Bresser 5-in-1 decoder
 # pylint: disable=import-error,wrong-import-position
 from bresser_decoder import (
     decodeBresser5In1Payload,
-    DECODE_OK
+    DECODE_OK,
+    DECODE_PAR_ERR,
+    DECODE_CHK_ERR
 )
 
 
@@ -21,7 +23,7 @@ class TestBresser5In1Decoder:
         
         # With synthetic data, may pass or fail validation depending on implementation
         # We just verify it doesn't crash
-        assert status in [DECODE_OK, 2, 3]  # DECODE_OK, DECODE_PAR_ERR, or DECODE_CHK_ERR
+        assert status in [DECODE_OK, DECODE_PAR_ERR, DECODE_CHK_ERR]
 
     def test_raw_payload_from_sensortransmitter(self):
         """Test decoding raw payload from SensorTransmitter.ino rawPayload()"""
@@ -43,7 +45,7 @@ class TestBresser5In1Decoder:
         status, data = decodeBresser5In1Payload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_all_ff_message(self):
         """Test decoding all 0xFF message"""
@@ -51,7 +53,7 @@ class TestBresser5In1Decoder:
         status, data = decodeBresser5In1Payload(msg, 26)
         
         # Should fail validation
-        assert status != DECODE_OK or data is None
+        assert status != DECODE_OK and data is None
 
     def test_message_structure(self):
         """Test that decoded data has expected structure for valid message"""
