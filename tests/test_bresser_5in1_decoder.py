@@ -7,7 +7,7 @@ import os
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import pytest
+# pylint: disable=import-error,wrong-import-position
 from bresser_decoder import (
     decodeBresser5In1Payload,
     DECODE_OK
@@ -23,7 +23,7 @@ class TestBresser5In1Decoder:
         # First 13 bytes and last 13 bytes should be inverse (total payload 26 bytes)
         msg = bytes([0xEA, 0x7F, 0x5F, 0xC7, 0x8E, 0x33, 0x51, 0xC5, 0xD7, 0xDD, 0xBB, 0xC4, 0xA6,  # First 13 bytes
                      0x15, 0x80, 0xA0, 0x38, 0x71, 0xCC, 0xAE, 0x3A, 0x28, 0x22, 0x44, 0x3B, 0x59])  # Last 13 bytes (inverse)
-        status, data = decodeBresser5In1Payload(msg, 26)
+        status, _ = decodeBresser5In1Payload(msg, 26)
         
         # With synthetic data, may pass or fail validation depending on implementation
         # We just verify it doesn't crash

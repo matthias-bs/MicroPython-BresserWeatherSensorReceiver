@@ -7,7 +7,7 @@ import os
 # Add src directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-import pytest
+# pylint: disable=import-error,wrong-import-position
 from bresser_decoder import (
     decodeBresser6In1Payload,
     DECODE_OK,
