@@ -93,6 +93,34 @@ def crc16(message, num_bytes, polynomial, init):
     return remainder
     
 
+def get_sensor_type_name(sensor_type):
+    """
+    Get human-readable sensor type name from sensor type number.
+    
+    Args:
+        sensor_type: Numeric sensor type value
+        
+    Returns:
+        str: Human-readable sensor type name
+    """
+    sensor_type_map = {
+        1: "Weather Station",
+        3: "Pool/Spa Thermometer",
+        4: "Soil Moisture Sensor",
+        5: "Leakage Sensor",
+        8: "Air Quality (PM) Sensor",
+        9: "Lightning Sensor",
+        10: "CO2 Sensor",
+        11: "HCHO/VOC Sensor",
+        12: "Weather Station (3-in-1)",
+        13: "Weather Station (8-in-1)",
+        0x39: "Professional Rain Gauge",
+        0x3A: "Professional Rain Gauge",
+        0x3B: "Professional Rain Gauge"
+    }
+    return sensor_type_map.get(sensor_type, f"Unknown (Type {sensor_type})")
+
+
 #
 # Ported from rtl_433 project - https://github.com/merbanan/rtl_433/blob/master/src/devices/bresser_6in1.c (20220608)
 #
@@ -703,13 +731,18 @@ def _print_test_sensor_data(data):
     
     # Print common fields
     sensor_id = data.get('sensor_id')
+    sensor_type = data.get('sensor_type')
     if sensor_id is not None:
+        # Prepend sensor type name
+        sensor_type_name = get_sensor_type_name(sensor_type) if sensor_type is not None else "Unknown"
+        print(f"{sensor_type_name}: ", end='')
+        
         if sensor_id <= 0xFF:
-            print(f"ID: 0x{sensor_id:02x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+            print(f"ID: 0x{sensor_id:02x}  Type: {sensor_type if sensor_type is not None else 'N/A'}", end='')
         elif sensor_id <= 0xFFFF:
-            print(f"ID: 0x{sensor_id:04x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+            print(f"ID: 0x{sensor_id:04x}  Type: {sensor_type if sensor_type is not None else 'N/A'}", end='')
         else:
-            print(f"ID: 0x{sensor_id:08x}  Type: {data.get('sensor_type', 'N/A')}", end='')
+            print(f"ID: 0x{sensor_id:08x}  Type: {sensor_type if sensor_type is not None else 'N/A'}", end='')
         
         if 'channel' in data:
             print(f"  Channel: {data['channel']}", end='')
