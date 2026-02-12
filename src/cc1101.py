@@ -9,8 +9,10 @@
 # Copyright 2021 (c) Erik de Lange
 # Released under MIT license
 
-# MicroPython specific imports unknown to pylint 
-from time import sleep_ms, sleep_us # pylint: disable=no-name-in-module
+import time
+
+# MicroPython specific imports unknown to pylint
+from time import sleep_ms # pylint: disable=no-name-in-module
 from machine import SPI, Pin # pylint: disable=import-error
 from micropython import const # pylint: disable=import-error
 
@@ -311,16 +313,16 @@ class CC1101:
     def reset(self):
         """ CC1101 reset """
         self.deselect()
-        time.sleep_us(5)
+        sleep_us(5)
         self.select()
-        time.sleep_us(10)
+        sleep_us(10)
         self.deselect()
-        time.sleep_us(45)
+        sleep_us(45)
         self.select()
 
         self.spi_wait_miso()
         self.write_command(CC1101.SRES)
-        time.sleep_ms(10)
+        sleep_ms(10)
         # self.spi_wait_miso()
         self.deselect()
 
@@ -622,8 +624,8 @@ class CC1101:
                 length = DATA_LEN - tx_status
                 length = len(data) - index if (len(data) - index) < length else length
 
-                for i in range(length):
-                    self.write_register(CC1101.TXFIFO, data[index + i])
+                for _i in range(length):
+                    self.write_register(CC1101.TXFIFO, data[index + _i])
 
                 index += length
 
@@ -700,58 +702,58 @@ class CC1101:
         #return setOutputPower(_power)
         return state
 
-    def setOutputPower(self, power):
-        # round to the known frequency settings
-        if self._freq < 374.0:
-            # 315 MHz
-            f = 0
-        elif self._freq < 650.5:
-            # 434 MHz
-            f = 1
-        elif self._freq < 891.5:
-            # 868 MHz
-            f = 2
-        else:
-            # 915 MHz
-            f = 3
-
-        # get raw power setting
-        paTable = [[0x12, 0x12, 0x03, 0x03],
-                   [0x0D, 0x0E, 0x0F, 0x0E],
-                   [0x1C, 0x1D, 0x1E, 0x1E],
-                   [0x34, 0x34, 0x27, 0x27],
-                   [0x51, 0x60, 0x50, 0x8E],
-                   [0x85, 0x84, 0x81, 0xCD],
-                   [0xCB, 0xC8, 0xCB, 0xC7],
-                   [0xC2, 0xC0, 0xC2, 0xC0]]
-
-        # requires Python >=3.10
-        #if power == -30:
-        #    powerRaw = paTable[0][f]
-        #    
-        #elif power == -20:
-        #    powerRaw = paTable[1][f]
-        # 
-        #elif power == -15:
-        #    powerRaw = paTable[2][f]
-        #    
-        #elif power == -10:
-        #    powerRaw = paTable[3][f]
-        #    
-        #elif power == 0:
-        #    powerRaw = paTable[4][f]
-        #    
-        #elif power == 5:
-        #    powerRaw = paTable[5][f]
-        #    
-        #elif power == 7:
-        #    powerRaw = paTable[6][f]
-        #    
-        #elif power == 10:
-        #    powerRaw = paTable[7][f]
-        #    
-        #else:
-        #    return CC1101.ERR_INVALID_OUTPUT_POWER
+#    def setOutputPower(self, power):
+#        # round to the known frequency settings
+#        if self._freq < 374.0:
+#            # 315 MHz
+#            f = 0
+#        elif self._freq < 650.5:
+#            # 434 MHz
+#            f = 1
+#        elif self._freq < 891.5:
+#            # 868 MHz
+#            f = 2
+#        else:
+#            # 915 MHz
+#            f = 3
+#
+#        # get raw power setting
+#        paTable = [[0x12, 0x12, 0x03, 0x03],
+#                   [0x0D, 0x0E, 0x0F, 0x0E],
+#                   [0x1C, 0x1D, 0x1E, 0x1E],
+#                   [0x34, 0x34, 0x27, 0x27],
+#                   [0x51, 0x60, 0x50, 0x8E],
+#                   [0x85, 0x84, 0x81, 0xCD],
+#                   [0xCB, 0xC8, 0xCB, 0xC7],
+#                   [0xC2, 0xC0, 0xC2, 0xC0]]
+#
+#        # requires Python >=3.10
+#        if power == -30:
+#            powerRaw = paTable[0][f]
+#            
+#        elif power == -20:
+#            powerRaw = paTable[1][f]
+#         
+#        elif power == -15:
+#            powerRaw = paTable[2][f]
+#            
+#        elif power == -10:
+#            powerRaw = paTable[3][f]
+#            
+#        elif power == 0:
+#            powerRaw = paTable[4][f]
+#            
+#        elif power == 5:
+#            powerRaw = paTable[5][f]
+#            
+#        elif power == 7:
+#            powerRaw = paTable[6][f]
+#            
+#        elif power == 10:
+#            powerRaw = paTable[7][f]
+#            
+#        else:
+#            return CC1101.ERR_INVALID_OUTPUT_POWER
 
         # store the value
         self._power = power
@@ -1009,5 +1011,6 @@ if __name__ == "__main__":
     for register in (CC1101.IOCFG2, CC1101.IOCFG1, CC1101.IOCFG0):
         print(hex(cc1101.read_register(register)), end=' ')
     print()
+
 
 
