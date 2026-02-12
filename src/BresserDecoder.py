@@ -2,9 +2,9 @@ import sys
 
 if sys.implementation.name != "micropython":
     const = lambda x: x
+else:
+    from micropython import const # pylint: disable=import-error
 
-# const a MicroPython specific extension unknown to pylint 
-# pylint: disable=possibly-used-before-assignment
 DECODE_INVALID  = const(0)
 DECODE_OK       = const(1)
 DECODE_PAR_ERR  = const(2)
