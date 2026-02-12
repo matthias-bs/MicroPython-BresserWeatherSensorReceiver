@@ -33,6 +33,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: Implementation :: MicroPython",
     "Topic :: Software Development :: Embedded Systems",
     "Topic :: Home Automation",
@@ -52,8 +53,7 @@ test = [
 ]
 dev = [
     "pylint",
-    "pytest>=7.4.0",
-    "pytest-cov>=4.1.0"
+    "micropython-bresser-weather-sensor-receiver[test]"
 ]
 
 [tool.setuptools]
