@@ -41,7 +41,7 @@ graph LR
     ESP32_GPIO33 --> CC1101_GDO2
 ```
 
-**Note:** Pin assignments are defined in [src/config.py](src/config.py) and use the ESP32's VSPI (SPI ID 2) hardware interface. The SPI pins (MOSI, MISO, SCK) are the hardware-defined defaults for VSPI on ESP32.
+**Note:** Pin assignments are defined in [src/config.py](src/config.py) and use the [ESP32's VSPI (SPI ID 2) hardware interface](https://docs.micropython.org/en/latest/esp32/quickref.html#hardware-spi-bus). The SPI pins (MOSI, MISO, SCK) are the hardware-defined defaults for VSPI on ESP32.
 
 ## Supported Bresser Sensor Protocols
 
