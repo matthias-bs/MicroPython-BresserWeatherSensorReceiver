@@ -5,7 +5,7 @@
 from time import sleep_ms
 import config
 from cc1101 import CC1101
-from bresser_decoder import (
+from BresserDecoder import (
     DECODE_INVALID, DECODE_OK, DECODE_SKIP,
     LOG_LEVEL_ERROR, set_log_level,
     BresserDecoder
