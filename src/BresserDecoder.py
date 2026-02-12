@@ -3,6 +3,8 @@ import sys
 if sys.implementation.name != "micropython":
     const = lambda x: x
 
+# const a MicroPython specific extension unknown to pylint 
+# pylint: disable=possibly-used-before-assignment
 DECODE_INVALID  = const(0)
 DECODE_OK       = const(1)
 DECODE_PAR_ERR  = const(2)
@@ -23,7 +25,7 @@ log_level = LOG_LEVEL_ERROR
 
 def set_log_level(level):
     """Set the global log level."""
-    global log_level
+    global log_level # pylint: disable=global-statement
     log_level = level
 
 def log_message(level, msg):
