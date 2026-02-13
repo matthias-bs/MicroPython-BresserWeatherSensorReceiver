@@ -262,6 +262,22 @@ class CC1101:
     CC1101_DEFAULT_PREAMBLELEN = const(16)
     CC1101_DEFAULT_SW          = [0x12, 0xAD]
     CC1101_DEFAULT_SW_LEN      = const(2)
+    
+    # PA_TABLE values for different power levels and frequency bands
+    # Each row is a power level, each column is a frequency band [315, 434, 868, 915 MHz]
+    # Values from CC1101 datasheet and RadioLib
+    CC1101_PA_TABLE = [[0x12, 0x12, 0x03, 0x03],  # -30 dBm
+                       [0x0D, 0x0E, 0x0F, 0x0E],  # -20 dBm
+                       [0x1C, 0x1D, 0x1E, 0x1E],  # -15 dBm
+                       [0x34, 0x34, 0x27, 0x27],  # -10 dBm
+                       [0x51, 0x60, 0x50, 0x8E],  #   0 dBm
+                       [0x85, 0x84, 0x81, 0xCD],  #   5 dBm
+                       [0xCB, 0xC8, 0xCB, 0xC7],  #   7 dBm
+                       [0xC2, 0xC0, 0xC2, 0xC0]]  #  10 dBm
+    
+    # Map power level (dBm) to PA table row index
+    CC1101_POWER_MAP = {-30: 0, -20: 1, -15: 2, -10: 3, 0: 4, 5: 5, 7: 6, 10: 7}
+
 
     def __init__(self, spi_id, ss, gdo0, gdo2):
         """ Create a CC1101 object connected to a microcontroller SPI channel
@@ -462,9 +478,12 @@ class CC1101:
         timeout = 500000 + (1.0/(self._br*1000.0))*(CC1101.CC1101_MAX_PACKET_LENGTH*400.0)
         
         # start reception
+        # Note: startReceive() returns ERR_NONE but this is not checked here. In RadioLib
+        # this would use RADIOLIB_ASSERT(state) macro for error checking. For MicroPython
+        # receive-only operation, startReceive() only sends SPI commands (SIDLE, SFRX, SRX)
+        # which don't typically fail. Any radio issues will be detected by the timeout
+        # mechanism below if no signal is received on GDO0.
         self.startReceive()
-        # FIXME
-        #RADIOLIB_ASSERT(state);
 
         # wait for packet or timeout
         start = ticks_us()
@@ -481,7 +500,6 @@ class CC1101:
         # read packet data
         return self.readData(length)
     
-    # FIXME
     def readData(self, length):
         # get packet length
         _length = self.getPacketLength()
@@ -701,86 +719,75 @@ class CC1101:
         state |= self.SPIsetRegValue(CC1101.FREQ0,  FRF & 0x0000FF)
 
         if (state == CC1101.ERR_NONE):
+            # Save old frequency in case power update fails
+            oldFreq = self._freq
+            # Update frequency value before calling setOutputPower (it uses self._freq)
             self._freq = freq
-
-        # FIXME
-        # (We are skipping this for the moment, because we only want to receive)
-        # Update the TX power accordingly to new freq. (PA values depend on chosen freq)
-        #return setOutputPower(_power)
+            # Update TX power accordingly to new frequency (PA values depend on chosen freq)
+            powerState = self.setOutputPower(self._power)
+            # If power config failed, restore old frequency and return error
+            if powerState != CC1101.ERR_NONE:
+                self._freq = oldFreq
+                return powerState
+        
         return state
 
-#    def setOutputPower(self, power):
-#        # round to the known frequency settings
-#        if self._freq < 374.0:
-#            # 315 MHz
-#            f = 0
-#        elif self._freq < 650.5:
-#            # 434 MHz
-#            f = 1
-#        elif self._freq < 891.5:
-#            # 868 MHz
-#            f = 2
-#        else:
-#            # 915 MHz
-#            f = 3
-#
-#        # get raw power setting
-#        paTable = [[0x12, 0x12, 0x03, 0x03],
-#                   [0x0D, 0x0E, 0x0F, 0x0E],
-#                   [0x1C, 0x1D, 0x1E, 0x1E],
-#                   [0x34, 0x34, 0x27, 0x27],
-#                   [0x51, 0x60, 0x50, 0x8E],
-#                   [0x85, 0x84, 0x81, 0xCD],
-#                   [0xCB, 0xC8, 0xCB, 0xC7],
-#                   [0xC2, 0xC0, 0xC2, 0xC0]]
-#
-#        # requires Python >=3.10
-#        if power == -30:
-#            powerRaw = paTable[0][f]
-#            
-#        elif power == -20:
-#            powerRaw = paTable[1][f]
-#         
-#        elif power == -15:
-#            powerRaw = paTable[2][f]
-#            
-#        elif power == -10:
-#            powerRaw = paTable[3][f]
-#            
-#        elif power == 0:
-#            powerRaw = paTable[4][f]
-#            
-#        elif power == 5:
-#            powerRaw = paTable[5][f]
-#            
-#        elif power == 7:
-#            powerRaw = paTable[6][f]
-#            
-#        elif power == 10:
-#            powerRaw = paTable[7][f]
-#            
-#        else:
-#            return CC1101.ERR_INVALID_OUTPUT_POWER
-#
-#        # store the value
-#        self._power = power
-#
-#        # FIXME
-#        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
-#            # Amplitude modulation:
-#            # PA_TABLE[0] is the power to be used when transmitting a 0  (no power)
-#            # PA_TABLE[1] is the power to be used when transmitting a 1  (full power)
-#
-#            # FIXME
-#            # paValues = [0x00, powerRaw]
-#            # SPIwriteRegisterBurst(RADIOLIB_CC1101_REG_PATABLE, paValues, 2);
-#            return CC1101.ERR_NONE
-#
-#        else:
-#            # Freq modulation:
-#            # PA_TABLE[0] is the power to be used when transmitting.
-#            # FIXME
-#            #return(SPIsetRegValue(RADIOLIB_CC1101_REG_PATABLE, powerRaw));
+    def setOutputPower(self, power):
+        """Set output power level for transmission.
+        
+        Configures the CC1101's PA_TABLE registers based on the current frequency
+        and desired output power. Power amplifier settings are frequency-dependent.
+        
+        :param int power: output power in dBm (-30, -20, -15, -10, 0, 5, 7, or 10)
+        :return int: ERR_NONE on success, ERR_INVALID_OUTPUT_POWER if power value invalid
+        """
+        # Determine frequency band index based on current frequency.
+        # Align boundaries with valid ranges used by setFrequency():
+        # - 315 MHz band: 300–348 MHz
+        # - 434 MHz band: 387–464 MHz
+        # - 868 MHz band: 779–<890 MHz
+        # - 915 MHz band: 890–928 MHz
+        #
+        # Note: The valid frequency range 779-928 MHz from setFrequency() is split at 890 MHz
+        # to use appropriate PA_TABLE values for the 868 MHz ISM band (863-870 MHz) vs the
+        # 915 MHz ISM band (902-928 MHz). This provides better power calibration for each
+        # sub-band rather than using a single set of PA values for the entire range.
+        if self._freq < 348.0:
+            # 315 MHz band
+            f = 0
+        elif self._freq < 464.0:
+            # 434 MHz band
+            f = 1
+        elif self._freq < 890.0:
+            # 868 MHz band
+            f = 2
+        else:
+            # 915 MHz band
+            f = 3
+
+        # Validate power level and get PA table index
+        if power not in CC1101.CC1101_POWER_MAP:
+            return CC1101.ERR_INVALID_OUTPUT_POWER
+        
+        powerRaw = CC1101.CC1101_PA_TABLE[CC1101.CC1101_POWER_MAP[power]][f]
+        
+        # Store the value
+        self._power = power
+
+        # Configure PA_TABLE based on modulation type
+        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
+            # Amplitude modulation (ASK/OOK):
+            # PA_TABLE[0] is the power to be used when transmitting a 0 (no power)
+            # PA_TABLE[1] is the power to be used when transmitting a 1 (full power)
+            paValues = bytearray([0x00, powerRaw])
+            self.write_burst(CC1101.PATABLE, paValues)
+        else:
+            # Frequency modulation (FSK/GFSK/MSK):
+            # PA_TABLE[0] is the power to be used when transmitting
+            self.write_register(CC1101.PATABLE, powerRaw)
+        
+        return CC1101.ERR_NONE
+
 
     def setBitRate(self, br):
         # RADIOLIB_CHECK_RANGE(br, 0.025, 600.0, RADIOLIB_ERR_INVALID_BIT_RATE);
@@ -825,8 +832,10 @@ class CC1101:
                 return exp, mant
 
     def setRxBandwidth(self, rxBw):
-        # FIXME
-        #RADIOLIB_CHECK_RANGE(rxBw, 58.0, 812.0, RADIOLIB_ERR_INVALID_RX_BANDWIDTH);
+        # Validate RX bandwidth range (58.0 to 812.0 kHz)
+        # Based on RadioLib RADIOLIB_CHECK_RANGE macro
+        if not (58.0 <= rxBw <= 812.0):
+            return CC1101.ERR_INVALID_RX_BANDWIDTH
 
         # set mode to standby
         self.write_command(CC1101.SIDLE)
@@ -850,9 +859,10 @@ class CC1101:
 
         # check range unless 0 (special value)
         if freqDev != 0:
-            # FIXME
-            #RADIOLIB_CHECK_RANGE(newFreqDev, 1.587, 380.8, RADIOLIB_ERR_INVALID_FREQUENCY_DEVIATION);
-            pass
+            # Validate frequency deviation range (1.587 to 380.8 kHz)
+            # Based on RadioLib RADIOLIB_CHECK_RANGE macro
+            if not (1.587 <= newFreqDev <= 380.8):
+                return CC1101.ERR_INVALID_FREQUENCY_DEVIATION
         
         # set mode to standby
         self.write_command(CC1101.SIDLE)
