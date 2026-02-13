@@ -262,6 +262,22 @@ class CC1101:
     CC1101_DEFAULT_PREAMBLELEN = const(16)
     CC1101_DEFAULT_SW          = [0x12, 0xAD]
     CC1101_DEFAULT_SW_LEN      = const(2)
+    
+    # PA_TABLE values for different power levels and frequency bands
+    # Each row is a power level, each column is a frequency band [315, 434, 868, 915 MHz]
+    # Values from CC1101 datasheet and RadioLib
+    CC1101_PA_TABLE = [[0x12, 0x12, 0x03, 0x03],  # -30 dBm
+                       [0x0D, 0x0E, 0x0F, 0x0E],  # -20 dBm
+                       [0x1C, 0x1D, 0x1E, 0x1E],  # -15 dBm
+                       [0x34, 0x34, 0x27, 0x27],  # -10 dBm
+                       [0x51, 0x60, 0x50, 0x8E],  #   0 dBm
+                       [0x85, 0x84, 0x81, 0xCD],  #   5 dBm
+                       [0xCB, 0xC8, 0xCB, 0xC7],  #   7 dBm
+                       [0xC2, 0xC0, 0xC2, 0xC0]]  #  10 dBm
+    
+    # Map power level (dBm) to PA table row index
+    CC1101_POWER_MAP = {-30: 0, -20: 1, -15: 2, -10: 3, 0: 4, 5: 5, 7: 6, 10: 7}
+
 
     def __init__(self, spi_id, ss, gdo0, gdo2):
         """ Create a CC1101 object connected to a microcontroller SPI channel
@@ -705,7 +721,10 @@ class CC1101:
         if (state == CC1101.ERR_NONE):
             self._freq = freq
             # Update TX power accordingly to new frequency (PA values depend on chosen freq)
-            return self.setOutputPower(self._power)
+            powerState = self.setOutputPower(self._power)
+            # Return power config error if it failed, otherwise return original state
+            if powerState != CC1101.ERR_NONE:
+                return powerState
         
         return state
 
@@ -732,25 +751,11 @@ class CC1101:
             # 915 MHz
             f = 3
 
-        # PA_TABLE values for different power levels and frequency bands
-        # Each row is a power level, each column is a frequency band [315, 434, 868, 915 MHz]
-        # Values from CC1101 datasheet and RadioLib
-        paTable = [[0x12, 0x12, 0x03, 0x03],  # -30 dBm
-                   [0x0D, 0x0E, 0x0F, 0x0E],  # -20 dBm
-                   [0x1C, 0x1D, 0x1E, 0x1E],  # -15 dBm
-                   [0x34, 0x34, 0x27, 0x27],  # -10 dBm
-                   [0x51, 0x60, 0x50, 0x8E],  #   0 dBm
-                   [0x85, 0x84, 0x81, 0xCD],  #   5 dBm
-                   [0xCB, 0xC8, 0xCB, 0xC7],  #   7 dBm
-                   [0xC2, 0xC0, 0xC2, 0xC0]]  #  10 dBm
-
-        # Map power level to PA table index
-        powerMap = {-30: 0, -20: 1, -15: 2, -10: 3, 0: 4, 5: 5, 7: 6, 10: 7}
-        
-        if power not in powerMap:
+        # Validate power level and get PA table index
+        if power not in CC1101.CC1101_POWER_MAP:
             return CC1101.ERR_INVALID_OUTPUT_POWER
         
-        powerRaw = paTable[powerMap[power]][f]
+        powerRaw = CC1101.CC1101_PA_TABLE[CC1101.CC1101_POWER_MAP[power]][f]
         
         # Store the value
         self._power = power
