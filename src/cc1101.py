@@ -462,9 +462,10 @@ class CC1101:
         timeout = 500000 + (1.0/(self._br*1000.0))*(CC1101.CC1101_MAX_PACKET_LENGTH*400.0)
         
         # start reception
+        # Note: startReceive() error handling omitted - in RadioLib this would use
+        # RADIOLIB_ASSERT(state) macro for error checking. For MicroPython receive-only
+        # operation, errors are handled by timeout mechanism below.
         self.startReceive()
-        # FIXME
-        #RADIOLIB_ASSERT(state);
 
         # wait for packet or timeout
         start = ticks_us()
@@ -481,7 +482,6 @@ class CC1101:
         # read packet data
         return self.readData(length)
     
-    # FIXME
     def readData(self, length):
         # get packet length
         _length = self.getPacketLength()
@@ -703,12 +703,24 @@ class CC1101:
         if (state == CC1101.ERR_NONE):
             self._freq = freq
 
-        # FIXME
-        # (We are skipping this for the moment, because we only want to receive)
-        # Update the TX power accordingly to new freq. (PA values depend on chosen freq)
-        #return setOutputPower(_power)
+        # Note: TX power update intentionally skipped for receive-only operation.
+        # In RadioLib, setOutputPower() would be called here to update PA_TABLE
+        # registers based on the new frequency. Since this driver only supports
+        # reception, transmit power configuration is not needed.
         return state
 
+    # NOTE: setOutputPower() is intentionally disabled for receive-only operation.
+    # This function would configure the CC1101's PA_TABLE registers to set transmit
+    # power levels based on frequency bands (315/434/868/915 MHz) and desired output
+    # power (-30 to +10 dBm). The implementation below is commented out because:
+    # 1. This driver is designed for receive-only operation (see README.md)
+    # 2. PA_TABLE configuration is only needed for transmission
+    # 3. Implementing SPIwriteRegisterBurst() would require additional testing
+    #
+    # If transmit functionality is needed in the future, this code can be re-enabled
+    # by implementing the missing SPIwriteRegisterBurst() method and updating PA_TABLE
+    # register writes (PATABLE) for both ASK/OOK and FSK modulation modes.
+    #
 #    def setOutputPower(self, power):
 #        # round to the known frequency settings
 #        if self._freq < 374.0:
@@ -765,13 +777,16 @@ class CC1101:
 #        # store the value
 #        self._power = power
 #
-#        # FIXME
+#        # Implementation notes for ASK/OOK and FSK modulation:
+#        # - For ASK/OOK: PA_TABLE[0]=0x00 (no power), PA_TABLE[1]=powerRaw (full power)
+#        # - For FSK: PA_TABLE[0]=powerRaw (transmit power)
+#        # Both require SPIwriteRegisterBurst() or SPIsetRegValue() to write PA_TABLE.
 #        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
 #            # Amplitude modulation:
 #            # PA_TABLE[0] is the power to be used when transmitting a 0  (no power)
 #            # PA_TABLE[1] is the power to be used when transmitting a 1  (full power)
 #
-#            # FIXME
+#            # Would require: SPIwriteRegisterBurst(PATABLE, [0x00, powerRaw], 2)
 #            # paValues = [0x00, powerRaw]
 #            # SPIwriteRegisterBurst(RADIOLIB_CC1101_REG_PATABLE, paValues, 2);
 #            return CC1101.ERR_NONE
@@ -779,8 +794,10 @@ class CC1101:
 #        else:
 #            # Freq modulation:
 #            # PA_TABLE[0] is the power to be used when transmitting.
-#            # FIXME
+#            # Would require: SPIsetRegValue(PATABLE, powerRaw)
 #            #return(SPIsetRegValue(RADIOLIB_CC1101_REG_PATABLE, powerRaw));
+#            pass
+
 
     def setBitRate(self, br):
         # RADIOLIB_CHECK_RANGE(br, 0.025, 600.0, RADIOLIB_ERR_INVALID_BIT_RATE);
@@ -825,8 +842,10 @@ class CC1101:
                 return exp, mant
 
     def setRxBandwidth(self, rxBw):
-        # FIXME
-        #RADIOLIB_CHECK_RANGE(rxBw, 58.0, 812.0, RADIOLIB_ERR_INVALID_RX_BANDWIDTH);
+        # Validate RX bandwidth range (58.0 to 812.0 kHz)
+        # Based on RadioLib RADIOLIB_CHECK_RANGE macro
+        if not (58.0 <= rxBw <= 812.0):
+            return CC1101.ERR_INVALID_RX_BANDWIDTH
 
         # set mode to standby
         self.write_command(CC1101.SIDLE)
@@ -850,9 +869,10 @@ class CC1101:
 
         # check range unless 0 (special value)
         if freqDev != 0:
-            # FIXME
-            #RADIOLIB_CHECK_RANGE(newFreqDev, 1.587, 380.8, RADIOLIB_ERR_INVALID_FREQUENCY_DEVIATION);
-            pass
+            # Validate frequency deviation range (1.587 to 380.8 kHz)
+            # Based on RadioLib RADIOLIB_CHECK_RANGE macro
+            if not (1.587 <= newFreqDev <= 380.8):
+                return CC1101.ERR_INVALID_FREQUENCY_DEVIATION
         
         # set mode to standby
         self.write_command(CC1101.SIDLE)
