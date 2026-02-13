@@ -745,7 +745,7 @@ class CC1101:
         # Align boundaries with valid ranges used by setFrequency():
         # - 315 MHz band: 300–348 MHz
         # - 434 MHz band: 387–464 MHz
-        # - 868 MHz band: 779–890 MHz
+        # - 868 MHz band: 779–<890 MHz
         # - 915 MHz band: 890–928 MHz
         if self._freq < 348.0:
             # 315 MHz band
