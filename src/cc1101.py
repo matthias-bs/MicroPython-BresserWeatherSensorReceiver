@@ -462,9 +462,11 @@ class CC1101:
         timeout = 500000 + (1.0/(self._br*1000.0))*(CC1101.CC1101_MAX_PACKET_LENGTH*400.0)
         
         # start reception
-        # Note: startReceive() error handling omitted - in RadioLib this would use
-        # RADIOLIB_ASSERT(state) macro for error checking. For MicroPython receive-only
-        # operation, errors are handled by timeout mechanism below.
+        # Note: startReceive() returns ERR_NONE but this is not checked here. In RadioLib
+        # this would use RADIOLIB_ASSERT(state) macro for error checking. For MicroPython
+        # receive-only operation, startReceive() only sends SPI commands (SIDLE, SFRX, SRX)
+        # which don't typically fail. Any radio issues will be detected by the timeout
+        # mechanism below if no signal is received on GDO0.
         self.startReceive()
 
         # wait for packet or timeout
@@ -796,7 +798,6 @@ class CC1101:
 #            # PA_TABLE[0] is the power to be used when transmitting.
 #            # Would require: SPIsetRegValue(PATABLE, powerRaw)
 #            #return(SPIsetRegValue(RADIOLIB_CC1101_REG_PATABLE, powerRaw));
-#            pass
 
 
     def setBitRate(self, br):
