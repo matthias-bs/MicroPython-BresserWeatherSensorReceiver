@@ -1,13 +1,22 @@
 # MicroPython CC1101 driver
 #
-# Inspired by the CC1101 drivers written in C from:
-# https://github.com/letscontrolit/ESPEasyPluginPlayground/
-# https://github.com/arjenhiemstra/IthoEcoFanRFT/blob/master/Master/Itho/CC1101.cpp
-# https://github.com/SpaceTeddy/CC1101/blob/master/cc1100_raspi.cpp
-# https://github.com/SpaceTeddy/CC1101/blob/master/cc1100_raspi.h
-#
+# Original source:
 # Copyright 2021 (c) Erik de Lange
+# https://github.com/erikdelange/ITHO-CVU-controller-in-MicroPython
 # Released under MIT license
+#
+# Error codes adapted from RadioLib (MIT License):
+# https://github.com/jgromes/RadioLib
+# Copyright (c) 2018 Jan Gromeš
+#
+# Register definitions and protocol from CC1101 datasheet:
+# https://www.ti.com/lit/ds/symlink/cc1101.pdf
+# Copyright (c) 2025 Texas Instruments Incorporated
+#
+# Implementation inspired by C drivers from:
+# - https://github.com/letscontrolit/ESPEasyPluginPlayground/ (reference only)
+# - https://github.com/arjenhiemstra/IthoEcoFanRFT/ (reference only)
+# - https://github.com/SpaceTeddy/CC1101/ (reference only)
 
 # MicroPython specific imports unknown to pylint
 from time import sleep_ms, sleep_us, ticks_us, ticks_ms # pylint: disable=no-name-in-module
