@@ -719,11 +719,15 @@ class CC1101:
         state |= self.SPIsetRegValue(CC1101.FREQ0,  FRF & 0x0000FF)
 
         if (state == CC1101.ERR_NONE):
+            # Save old frequency in case power update fails
+            oldFreq = self._freq
+            # Update frequency value before calling setOutputPower (it uses self._freq)
             self._freq = freq
             # Update TX power accordingly to new frequency (PA values depend on chosen freq)
             powerState = self.setOutputPower(self._power)
-            # Return power config error if it failed, otherwise return original state
+            # If power config failed, restore old frequency and return error
             if powerState != CC1101.ERR_NONE:
+                self._freq = oldFreq
                 return powerState
         
         return state
@@ -737,18 +741,23 @@ class CC1101:
         :param int power: output power in dBm (-30, -20, -15, -10, 0, 5, 7, or 10)
         :return int: ERR_NONE on success, ERR_INVALID_OUTPUT_POWER if power value invalid
         """
-        # Determine frequency band index based on current frequency
-        if self._freq < 374.0:
-            # 315 MHz
+        # Determine frequency band index based on current frequency.
+        # Align boundaries with valid ranges used by setFrequency():
+        # - 315 MHz band: 300–348 MHz
+        # - 434 MHz band: 387–464 MHz
+        # - 868 MHz band: 779–890 MHz
+        # - 915 MHz band: 890–928 MHz
+        if self._freq < 348.0:
+            # 315 MHz band
             f = 0
-        elif self._freq < 650.5:
-            # 434 MHz
+        elif self._freq < 464.0:
+            # 434 MHz band
             f = 1
-        elif self._freq < 891.5:
-            # 868 MHz
+        elif self._freq < 890.0:
+            # 868 MHz band
             f = 2
         else:
-            # 915 MHz
+            # 915 MHz band
             f = 3
 
         # Validate power level and get PA table index
