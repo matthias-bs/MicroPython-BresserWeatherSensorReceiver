@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "micropython-bresser-weather-sensor-receiver"
-version = "0.1.0"
+version = "0.2.0"
 description = "Bresser 5-in-1/6-in-1/7-in-1 868 MHz Weather Sensor Radio Receiver for MicroPython using Texas Instruments CC1101"
 readme = "README.md"
 # requires-python specifies the Python version for development/testing tooling,
