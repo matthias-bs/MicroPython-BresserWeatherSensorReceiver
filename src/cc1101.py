@@ -747,6 +747,11 @@ class CC1101:
         # - 434 MHz band: 387–464 MHz
         # - 868 MHz band: 779–<890 MHz
         # - 915 MHz band: 890–928 MHz
+        #
+        # Note: The valid frequency range 779-928 MHz from setFrequency() is split at 890 MHz
+        # to use appropriate PA_TABLE values for the 868 MHz ISM band (863-870 MHz) vs the
+        # 915 MHz ISM band (902-928 MHz). This provides better power calibration for each
+        # sub-band rather than using a single set of PA values for the entire range.
         if self._freq < 348.0:
             # 315 MHz band
             f = 0
