@@ -48,6 +48,50 @@ graph LR
 
 **Note:** Pin assignments are defined in [src/config.py](src/config.py) and use the [ESP32's VSPI (SPI ID 2) hardware interface](https://docs.micropython.org/en/latest/esp32/quickref.html#hardware-spi-bus). The SPI pins (MOSI, MISO, SCK) are the hardware-defined defaults for VSPI on ESP32.
 
+## Installation
+
+### Prerequisites
+
+* [MicroPython](https://micropython.org/) v1.27.0 or later installed on your ESP32
+* CC1101 radio module connected to your ESP32 as described in the [Hardware Connection](#hardware-connection) section
+
+### Installation Steps
+
+1. **Copy the source files to your MicroPython device:**
+   
+   Copy all files from the `src/` directory to your ESP32:
+   - `BresserDecoder.py` - Decoder implementations for all supported Bresser sensor types
+   - `cc1101.py` - CC1101 radio module driver
+   - `config.py` - Hardware configuration (pin assignments)
+   - `main.py` - Example implementation
+
+   You can use tools like [mpremote](https://docs.micropython.org/en/latest/reference/mpremote.html), [ampy](https://github.com/scientifichackers/ampy), [rshell](https://github.com/dhylands/rshell), or [Thonny IDE](https://thonny.org/) to transfer files to your device.
+
+2. **Configure hardware pins (if needed):**
+   
+   If your hardware setup differs from the default pin assignments, edit `config.py` on your device to match your wiring.
+
+3. **Customize the implementation:**
+   
+   **Important:** The provided `main.py` is an example implementation that demonstrates how to receive and decode Bresser weather sensor data. It is intended as a starting point for your own application-specific implementation.
+   
+   You should customize `main.py` based on your requirements, such as:
+   - Integration with other sensors or systems
+   - Data logging or storage
+   - Network connectivity (WiFi, MQTT, etc.)
+   - Power management
+   - Error handling and recovery
+
+4. **Run the application:**
+   
+   Once the files are copied and configured, you can run the receiver by executing:
+   ```python
+   import main
+   main.main()
+   ```
+   
+   Or reset your ESP32 if `main.py` is set to run automatically on boot.
+
 ## Supported Bresser Sensor Protocols
 
 * **6-in-1 Decoder**
