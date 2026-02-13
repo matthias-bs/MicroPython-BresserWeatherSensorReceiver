@@ -704,100 +704,70 @@ class CC1101:
 
         if (state == CC1101.ERR_NONE):
             self._freq = freq
-
-        # Note: TX power update intentionally skipped for receive-only operation.
-        # In RadioLib, setOutputPower() would be called here to update PA_TABLE
-        # registers based on the new frequency. Since this driver only supports
-        # reception, transmit power configuration is not needed.
+            # Update TX power accordingly to new frequency (PA values depend on chosen freq)
+            return self.setOutputPower(self._power)
+        
         return state
 
-    # NOTE: setOutputPower() is intentionally disabled for receive-only operation.
-    # This function would configure the CC1101's PA_TABLE registers to set transmit
-    # power levels based on frequency bands (315/434/868/915 MHz) and desired output
-    # power (-30 to +10 dBm). The implementation below is commented out because:
-    # 1. This driver is designed for receive-only operation (see README.md)
-    # 2. PA_TABLE configuration is only needed for transmission
-    # 3. Implementing SPIwriteRegisterBurst() would require additional testing
-    #
-    # If transmit functionality is needed in the future, this code can be re-enabled
-    # by implementing the missing SPIwriteRegisterBurst() method and updating PA_TABLE
-    # register writes (PATABLE) for both ASK/OOK and FSK modulation modes.
-    #
-#    def setOutputPower(self, power):
-#        # round to the known frequency settings
-#        if self._freq < 374.0:
-#            # 315 MHz
-#            f = 0
-#        elif self._freq < 650.5:
-#            # 434 MHz
-#            f = 1
-#        elif self._freq < 891.5:
-#            # 868 MHz
-#            f = 2
-#        else:
-#            # 915 MHz
-#            f = 3
-#
-#        # get raw power setting
-#        paTable = [[0x12, 0x12, 0x03, 0x03],
-#                   [0x0D, 0x0E, 0x0F, 0x0E],
-#                   [0x1C, 0x1D, 0x1E, 0x1E],
-#                   [0x34, 0x34, 0x27, 0x27],
-#                   [0x51, 0x60, 0x50, 0x8E],
-#                   [0x85, 0x84, 0x81, 0xCD],
-#                   [0xCB, 0xC8, 0xCB, 0xC7],
-#                   [0xC2, 0xC0, 0xC2, 0xC0]]
-#
-#        # requires Python >=3.10
-#        if power == -30:
-#            powerRaw = paTable[0][f]
-#            
-#        elif power == -20:
-#            powerRaw = paTable[1][f]
-#         
-#        elif power == -15:
-#            powerRaw = paTable[2][f]
-#            
-#        elif power == -10:
-#            powerRaw = paTable[3][f]
-#            
-#        elif power == 0:
-#            powerRaw = paTable[4][f]
-#            
-#        elif power == 5:
-#            powerRaw = paTable[5][f]
-#            
-#        elif power == 7:
-#            powerRaw = paTable[6][f]
-#            
-#        elif power == 10:
-#            powerRaw = paTable[7][f]
-#            
-#        else:
-#            return CC1101.ERR_INVALID_OUTPUT_POWER
-#
-#        # store the value
-#        self._power = power
-#
-#        # Implementation notes for ASK/OOK and FSK modulation:
-#        # - For ASK/OOK: PA_TABLE[0]=0x00 (no power), PA_TABLE[1]=powerRaw (full power)
-#        # - For FSK: PA_TABLE[0]=powerRaw (transmit power)
-#        # Both require SPIwriteRegisterBurst() or SPIsetRegValue() to write PA_TABLE.
-#        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
-#            # Amplitude modulation:
-#            # PA_TABLE[0] is the power to be used when transmitting a 0  (no power)
-#            # PA_TABLE[1] is the power to be used when transmitting a 1  (full power)
-#
-#            # Would require: SPIwriteRegisterBurst(PATABLE, [0x00, powerRaw], 2)
-#            # paValues = [0x00, powerRaw]
-#            # SPIwriteRegisterBurst(RADIOLIB_CC1101_REG_PATABLE, paValues, 2);
-#            return CC1101.ERR_NONE
-#
-#        else:
-#            # Freq modulation:
-#            # PA_TABLE[0] is the power to be used when transmitting.
-#            # Would require: SPIsetRegValue(PATABLE, powerRaw)
-#            #return(SPIsetRegValue(RADIOLIB_CC1101_REG_PATABLE, powerRaw));
+    def setOutputPower(self, power):
+        """Set output power level for transmission.
+        
+        Configures the CC1101's PA_TABLE registers based on the current frequency
+        and desired output power. Power amplifier settings are frequency-dependent.
+        
+        :param int power: output power in dBm (-30, -20, -15, -10, 0, 5, 7, or 10)
+        :return int: ERR_NONE on success, ERR_INVALID_OUTPUT_POWER if power value invalid
+        """
+        # Determine frequency band index based on current frequency
+        if self._freq < 374.0:
+            # 315 MHz
+            f = 0
+        elif self._freq < 650.5:
+            # 434 MHz
+            f = 1
+        elif self._freq < 891.5:
+            # 868 MHz
+            f = 2
+        else:
+            # 915 MHz
+            f = 3
+
+        # PA_TABLE values for different power levels and frequency bands
+        # Each row is a power level, each column is a frequency band [315, 434, 868, 915 MHz]
+        # Values from CC1101 datasheet and RadioLib
+        paTable = [[0x12, 0x12, 0x03, 0x03],  # -30 dBm
+                   [0x0D, 0x0E, 0x0F, 0x0E],  # -20 dBm
+                   [0x1C, 0x1D, 0x1E, 0x1E],  # -15 dBm
+                   [0x34, 0x34, 0x27, 0x27],  # -10 dBm
+                   [0x51, 0x60, 0x50, 0x8E],  #   0 dBm
+                   [0x85, 0x84, 0x81, 0xCD],  #   5 dBm
+                   [0xCB, 0xC8, 0xCB, 0xC7],  #   7 dBm
+                   [0xC2, 0xC0, 0xC2, 0xC0]]  #  10 dBm
+
+        # Map power level to PA table index
+        powerMap = {-30: 0, -20: 1, -15: 2, -10: 3, 0: 4, 5: 5, 7: 6, 10: 7}
+        
+        if power not in powerMap:
+            return CC1101.ERR_INVALID_OUTPUT_POWER
+        
+        powerRaw = paTable[powerMap[power]][f]
+        
+        # Store the value
+        self._power = power
+
+        # Configure PA_TABLE based on modulation type
+        if self._modulation == CC1101.CC1101_MOD_FORMAT_ASK_OOK:
+            # Amplitude modulation (ASK/OOK):
+            # PA_TABLE[0] is the power to be used when transmitting a 0 (no power)
+            # PA_TABLE[1] is the power to be used when transmitting a 1 (full power)
+            paValues = bytearray([0x00, powerRaw])
+            self.write_burst(CC1101.PATABLE, paValues)
+        else:
+            # Frequency modulation (FSK/GFSK/MSK):
+            # PA_TABLE[0] is the power to be used when transmitting
+            self.write_register(CC1101.PATABLE, powerRaw)
+        
+        return CC1101.ERR_NONE
 
 
     def setBitRate(self, br):
